@@ -1,22 +1,14 @@
 import { useState, useEffect } from 'react'
 import { ClockIcon, UserGroupIcon, BuildingOfficeIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
-
-interface Log {
-  id: string
-  worker: string
-  project: string
-  task: string
-  date: string
-  startTime: string
-  endTime: string
-  photos: string[]
-  createdAt: string
-}
+import LogDetailModal from '../components/LogDetailModal'
+import { Log } from '../types'
 
 export default function Dashboard() {
   const [logs, setLogs] = useState<Log[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [selectedLog, setSelectedLog] = useState<Log | null>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
 
   useEffect(() => {
     fetchLogs()
@@ -69,6 +61,11 @@ export default function Dashboard() {
     },
   ]
 
+  const handleLogClick = (log: Log) => {
+    setSelectedLog(log)
+    setIsModalOpen(true)
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -118,7 +115,11 @@ export default function Dashboard() {
           ) : (
             <ul role="list" className="divide-y divide-yellow-200">
               {logs.map((log) => (
-                <li key={log.id} className="px-4 py-4 sm:px-6 hover:bg-yellow-50">
+                <li
+                  key={log.id}
+                  className="px-4 py-4 sm:px-6 hover:bg-yellow-50 cursor-pointer"
+                  onClick={() => handleLogClick(log)}
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-yellow-600 truncate">{log.worker}</p>
@@ -160,6 +161,12 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      <LogDetailModal
+        log={selectedLog}
+        open={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </div>
   )
 } 
