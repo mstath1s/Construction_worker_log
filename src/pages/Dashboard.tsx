@@ -9,6 +9,11 @@ export default function Dashboard() {
   const [error, setError] = useState<string | null>(null)
   const [selectedLog, setSelectedLog] = useState<Log | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedWorker, setSelectedWorker] = useState<string>('')
+  const [dateRange, setDateRange] = useState({
+    startDate: '',
+    endDate: new Date().toISOString().split('T')[0]
+  })
 
   useEffect(() => {
     fetchLogs()
@@ -29,26 +34,35 @@ export default function Dashboard() {
     }
   }
 
+  const workers = Array.from(new Set(logs.map(log => log.worker))).sort()
+
+  const filteredLogs = logs.filter(log => {
+    const matchesWorker = !selectedWorker || log.worker === selectedWorker
+    const matchesDate = (!dateRange.startDate || log.date >= dateRange.startDate) &&
+                       (!dateRange.endDate || log.date <= dateRange.endDate)
+    return matchesWorker && matchesDate
+  })
+
   // Calculate statistics
   const stats = [
     { 
       name: 'Active Workers', 
-      stat: String(new Set(logs.map(log => log.worker)).size),
+      stat: String(new Set(filteredLogs.map(log => log.worker)).size),
       icon: UserGroupIcon 
     },
     { 
       name: 'Active Projects', 
-      stat: String(new Set(logs.map(log => log.project)).size),
+      stat: String(new Set(filteredLogs.map(log => log.project)).size),
       icon: BuildingOfficeIcon 
     },
     { 
       name: 'Today\'s Logs', 
-      stat: String(logs.filter(log => log.date === new Date().toISOString().split('T')[0]).length),
+      stat: String(filteredLogs.filter(log => log.date === new Date().toISOString().split('T')[0]).length),
       icon: DocumentTextIcon 
     },
     { 
       name: 'Total Hours Today', 
-      stat: String(logs
+      stat: String(filteredLogs
         .filter(log => log.date === new Date().toISOString().split('T')[0])
         .reduce((total, log) => {
           const start = new Date(`${log.date}T${log.startTime}`)
@@ -83,6 +97,51 @@ export default function Dashboard() {
         </div>
       )}
 
+      <div className="bg-white shadow sm:rounded-lg p-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div>
+            <label htmlFor="worker" className="block text-sm font-medium text-yellow-700">
+              Filter by Worker
+            </label>
+            <select
+              id="worker"
+              className="mt-1 block w-full rounded-md border-yellow-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
+              value={selectedWorker}
+              onChange={(e) => setSelectedWorker(e.target.value)}
+            >
+              <option value="">All Workers</option>
+              {workers.map(worker => (
+                <option key={worker} value={worker}>{worker}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label htmlFor="startDate" className="block text-sm font-medium text-yellow-700">
+              Start Date
+            </label>
+            <input
+              type="date"
+              id="startDate"
+              className="mt-1 block w-full rounded-md border-yellow-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
+              value={dateRange.startDate}
+              onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+            />
+          </div>
+          <div>
+            <label htmlFor="endDate" className="block text-sm font-medium text-yellow-700">
+              End Date
+            </label>
+            <input
+              type="date"
+              id="endDate"
+              className="mt-1 block w-full rounded-md border-yellow-300 shadow-sm focus:border-yellow-500 focus:ring-yellow-500 sm:text-sm"
+              value={dateRange.endDate}
+              onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+            />
+          </div>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
           <div key={item.name} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
@@ -108,13 +167,13 @@ export default function Dashboard() {
             <div className="text-center py-4">
               <p className="text-yellow-700">Loading logs...</p>
             </div>
-          ) : logs.length === 0 ? (
+          ) : filteredLogs.length === 0 ? (
             <div className="text-center py-4">
               <p className="text-yellow-700">No logs found</p>
             </div>
           ) : (
             <ul role="list" className="divide-y divide-yellow-200">
-              {logs.map((log) => (
+              {filteredLogs.map((log) => (
                 <li
                   key={log.id}
                   className="px-4 py-4 sm:px-6 hover:bg-yellow-50 cursor-pointer"
