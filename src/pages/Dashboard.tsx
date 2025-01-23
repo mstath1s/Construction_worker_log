@@ -1,47 +1,101 @@
+import { useState, useEffect } from 'react'
 import { ClockIcon, UserGroupIcon, BuildingOfficeIcon, DocumentTextIcon } from '@heroicons/react/24/outline'
 
-const stats = [
-  { name: 'Active Workers', stat: '12', icon: UserGroupIcon },
-  { name: 'Active Projects', stat: '4', icon: BuildingOfficeIcon },
-  { name: 'Today\'s Logs', stat: '8', icon: DocumentTextIcon },
-  { name: 'Total Hours Today', stat: '96', icon: ClockIcon },
-]
-
-const recentLogs = [
-  {
-    worker: 'John Smith',
-    project: 'City Center Mall',
-    task: 'Concrete foundation work',
-    hours: 8,
-    date: '2024-03-20',
-  },
-  {
-    worker: 'Mike Johnson',
-    project: 'Riverside Apartments',
-    task: 'Electrical wiring installation',
-    hours: 7.5,
-    date: '2024-03-20',
-  },
-]
+interface Log {
+  id: string
+  worker: string
+  project: string
+  task: string
+  date: string
+  startTime: string
+  endTime: string
+  photos: string[]
+  createdAt: string
+}
 
 export default function Dashboard() {
+  const [logs, setLogs] = useState<Log[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    fetchLogs()
+  }, [])
+
+  const fetchLogs = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/api/logs')
+      if (!response.ok) {
+        throw new Error('Failed to fetch logs')
+      }
+      const data = await response.json()
+      setLogs(data)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch logs')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Calculate statistics
+  const stats = [
+    { 
+      name: 'Active Workers', 
+      stat: String(new Set(logs.map(log => log.worker)).size),
+      icon: UserGroupIcon 
+    },
+    { 
+      name: 'Active Projects', 
+      stat: String(new Set(logs.map(log => log.project)).size),
+      icon: BuildingOfficeIcon 
+    },
+    { 
+      name: 'Today\'s Logs', 
+      stat: String(logs.filter(log => log.date === new Date().toISOString().split('T')[0]).length),
+      icon: DocumentTextIcon 
+    },
+    { 
+      name: 'Total Hours Today', 
+      stat: String(logs
+        .filter(log => log.date === new Date().toISOString().split('T')[0])
+        .reduce((total, log) => {
+          const start = new Date(`${log.date}T${log.startTime}`)
+          const end = new Date(`${log.date}T${log.endTime}`)
+          const hours = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
+          return total + hours
+        }, 0).toFixed(1)
+      ),
+      icon: ClockIcon 
+    },
+  ]
+
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-gray-900">Dashboard</h2>
-        <p className="mt-1 text-sm text-gray-500">Overview of today's construction activities</p>
+        <h2 className="text-2xl font-bold text-yellow-900">Dashboard</h2>
+        <p className="mt-1 text-sm text-yellow-700">Overview of today's construction activities</p>
       </div>
+
+      {error && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">{error}</h3>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
         {stats.map((item) => (
           <div key={item.name} className="overflow-hidden rounded-lg bg-white px-4 py-5 shadow sm:p-6">
             <div className="flex items-center">
               <div className="flex-shrink-0">
-                <item.icon className="h-6 w-6 text-gray-400" aria-hidden="true" />
+                <item.icon className="h-6 w-6 text-yellow-400" aria-hidden="true" />
               </div>
               <div className="ml-5 w-0 flex-1">
-                <dt className="truncate text-sm font-medium text-gray-500">{item.name}</dt>
-                <dd className="mt-1 text-3xl font-semibold tracking-tight text-gray-900">{item.stat}</dd>
+                <dt className="truncate text-sm font-medium text-yellow-700">{item.name}</dt>
+                <dd className="mt-1 text-3xl font-semibold tracking-tight text-yellow-900">{item.stat}</dd>
               </div>
             </div>
           </div>
@@ -50,28 +104,60 @@ export default function Dashboard() {
 
       <div className="overflow-hidden bg-white shadow sm:rounded-lg">
         <div className="px-4 py-5 sm:px-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900">Recent Logs</h3>
+          <h3 className="text-lg font-medium leading-6 text-yellow-900">Recent Logs</h3>
         </div>
-        <div className="border-t border-gray-200">
-          <ul role="list" className="divide-y divide-gray-200">
-            {recentLogs.map((log) => (
-              <li key={`${log.worker}-${log.date}`} className="px-4 py-4 sm:px-6 hover:bg-gray-50">
-                <div className="flex items-center justify-between">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-blue-600 truncate">{log.worker}</p>
-                    <p className="text-sm text-gray-500">{log.project}</p>
-                    <p className="mt-1 text-sm text-gray-900">{log.task}</p>
-                  </div>
-                  <div className="ml-4 flex-shrink-0">
-                    <div className="flex flex-col items-end">
-                      <p className="text-sm text-gray-900">{log.hours} hours</p>
-                      <p className="text-sm text-gray-500">{log.date}</p>
+        <div className="border-t border-yellow-200">
+          {loading ? (
+            <div className="text-center py-4">
+              <p className="text-yellow-700">Loading logs...</p>
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="text-center py-4">
+              <p className="text-yellow-700">No logs found</p>
+            </div>
+          ) : (
+            <ul role="list" className="divide-y divide-yellow-200">
+              {logs.map((log) => (
+                <li key={log.id} className="px-4 py-4 sm:px-6 hover:bg-yellow-50">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-yellow-600 truncate">{log.worker}</p>
+                      <p className="text-sm text-yellow-500">{log.project}</p>
+                      <p className="mt-1 text-sm text-yellow-900">{log.task}</p>
+                      {log.photos && log.photos.length > 0 && (
+                        <div className="mt-2 flex -space-x-2 overflow-hidden">
+                          {log.photos.slice(0, 3).map((photo, index) => (
+                            <img
+                              key={index}
+                              src={`http://localhost:3000${photo}`}
+                              alt={`Photo ${index + 1}`}
+                              className="inline-block h-8 w-8 rounded-full ring-2 ring-white object-cover"
+                            />
+                          ))}
+                          {log.photos.length > 3 && (
+                            <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-yellow-100 ring-2 ring-white">
+                              <span className="text-xs font-medium text-yellow-600">
+                                +{log.photos.length - 3}
+                              </span>
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <div className="ml-4 flex-shrink-0">
+                      <div className="flex flex-col items-end">
+                        <p className="text-sm text-yellow-900">
+                          {new Date(`${log.date}T${log.startTime}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} - 
+                          {new Date(`${log.date}T${log.endTime}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                        <p className="text-sm text-yellow-500">{new Date(log.date).toLocaleDateString()}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              </li>
-            ))}
-          </ul>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
     </div>
