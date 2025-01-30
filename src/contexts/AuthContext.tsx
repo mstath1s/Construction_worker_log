@@ -9,6 +9,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
 import { AuthContextType, UserProfile, UserRole } from '../types/auth';
+import { UserRoles } from '../types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -23,7 +24,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Convert Firebase user to our UserProfile type
         setUser({
           ...firebaseUser,
-          role: (firebaseUser as any).role || 'worker', // Default to worker role
+          role: (firebaseUser as any).role || UserRoles.WORKER, // Default to worker role
         });
       } else {
         setUser(null);

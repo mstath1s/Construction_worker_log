@@ -81,7 +81,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-yellow-900">Dashboard</h2>
         <p className="mt-1 text-sm text-yellow-700">Overview of today's construction activities</p>

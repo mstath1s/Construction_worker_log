@@ -1,17 +1,45 @@
 import { Disclosure } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { Link, Outlet } from 'react-router-dom'
+import { Link } from 'react-router-dom'
+import { UserRoles } from '../types/auth';
 
-const navigation = [
-  { name: 'Dashboard', href: '/' },
-  { name: 'Daily Log', href: '/daily-log' },
-  { name: 'Projects', href: '/projects' },
-  { name: 'Workers', href: '/workers' },
-]
+interface LayoutProps {
+    user: { role: string }; // User object with a role
+}
 
-export default function Layout() {
-  return (
-    <div className="min-h-screen bg-yellow-50">
+const getNavigationLinks = (role: string) => {
+    const baseLinks = [
+        { name: 'Dashboard', href: '/dashboard' },
+    ];
+    switch (role) {
+        case UserRoles.ADMIN:
+            return [
+                ...baseLinks,
+                { name: 'Projects', href: '/projects' },
+                { name: 'Workers', href: '/workers' },
+            ];
+        case UserRoles.SITE_SUPERVISOR:
+            return [
+                ...baseLinks,
+                { name: 'Daily Log', href: '/daily-log' },
+                { name: 'Projects', href: '/projects' },
+            ];
+        case UserRoles.WORKER:
+            return [
+                ...baseLinks,
+                { name: 'Daily Log', href: '/daily-log' },
+            ];
+        default:
+            return baseLinks;
+    }
+};
+
+export default function Layout({ user }: LayoutProps) {
+
+    const navigation = user ? getNavigationLinks(user.role) : [];
+
+    return (
+    <div className="bg-yellow-50">
       <Disclosure as="nav" className="bg-yellow-600">
         {({ open }) => (
           <>
@@ -65,9 +93,9 @@ export default function Layout() {
         )}
       </Disclosure>
 
-      <main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
+        {/*<main className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         <Outlet />
-      </main>
+      </main>*/}
     </div>
   )
 } 

@@ -2,6 +2,8 @@ import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserRole } from '../../types/auth';
+import Layout from '../Layout'
+
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -26,6 +28,10 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
-
-  return <>{children}</>;
+  return (
+      <>
+        <Layout user={user} />
+        {children}
+      </>
+  );
 } 

@@ -6,36 +6,39 @@ import { SignupPage } from './pages/auth/SignupPage';
 import { UnauthorizedPage } from './pages/auth/UnauthorizedPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { UserRoles } from './types/auth';
-import Layout from './components/Layout'
 import Dashboard from './pages/Dashboard'
 import DailyLog from './pages/DailyLog'
+import Layout from './components/Layout.tsx'
 
 function App() {
   return (
     <Router>
       <AuthProvider>
+
         <Routes>
           {/* Public routes */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/unauthorized" element={<UnauthorizedPage />} />
-          
+
           {/* Protected routes */}
+
+
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <div>Dashboard (Replace with your Dashboard component)</div>
+                <Dashboard />
               </ProtectedRoute>
             }
           />
 
           {/* Worker routes */}
           <Route
-            path="/worker-log"
+            path="/daily-log"
             element={
               <ProtectedRoute allowedRoles={[UserRoles.WORKER, UserRoles.SITE_SUPERVISOR, UserRoles.ADMIN]}>
-                <div>Worker Log (Replace with your WorkerLog component)</div>
+                  <DailyLog />
               </ProtectedRoute>
             }
           />
