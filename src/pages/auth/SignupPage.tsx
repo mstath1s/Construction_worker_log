@@ -48,7 +48,7 @@ export function SignupPage() {
         formData.role,
         formData.displayName
       );
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       if (err instanceof z.ZodError) {
         const errors: Record<string, string> = {};

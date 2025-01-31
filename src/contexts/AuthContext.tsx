@@ -7,7 +7,8 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '../config/firebase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
 import { AuthContextType, UserProfile, UserRole } from '../types/auth';
 import { UserRoles } from '../types/auth';
 
@@ -19,13 +20,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // Convert Firebase user to our UserProfile type
-        setUser({
-          ...firebaseUser,
-          role: (firebaseUser as any).role || UserRoles.WORKER, // Default to worker role
-        });
+        try {
+          // Get user role from Firestore
+          const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+          const userData = userDoc.data();
+          
+          // Convert Firebase user to our UserProfile type
+          setUser({
+            ...firebaseUser,
+            role: userData?.role || UserRoles.WORKER, // Default to worker role if not found
+          });
+        } catch (err) {
+          console.error('Error fetching user role:', err);
+          setUser({
+            ...firebaseUser,
+            role: UserRoles.WORKER, // Default to worker role on error
+          });
+        }
       } else {
         setUser(null);
       }
@@ -57,8 +70,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Update profile with display name
       await updateProfile(firebaseUser, { displayName });
       
-      // Here you would typically also save the role to your database
-      // For this example, we're just setting it in the local state
+      // Save user role to Firestore
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        role,
+        email,
+        displayName,
+        createdAt: new Date().toISOString(),
+      });
+      
+      // Set user in state
       setUser({
         ...firebaseUser,
         role,

@@ -33,7 +33,7 @@ export function LoginPage() {
       setValidationErrors({});
       
       await signIn(formData.email, formData.password);
-      navigate('/dashboard');
+      navigate('/');
     } catch (err) {
       if (err instanceof z.ZodError) {
         const errors: Record<string, string> = {};

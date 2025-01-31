@@ -1,12 +1,11 @@
 import React from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { UserRole } from '../../types/auth';
+import { UserRole, UserProfile } from '../../types/auth';
 import Layout from '../Layout'
 
-
 interface ProtectedRouteProps {
-  children: React.ReactNode;
+  children: React.ReactNode | ((props: { user: UserProfile | null }) => React.ReactElement);
   allowedRoles?: UserRole[];
 }
 
@@ -28,10 +27,11 @@ export function ProtectedRoute({ children, allowedRoles }: ProtectedRouteProps) 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
     return <Navigate to="/unauthorized" replace />;
   }
+
   return (
-      <>
-        <Layout user={user} />
-        {children}
-      </>
+    <>
+      <Layout user={user} />
+      {typeof children === 'function' ? children({ user }) : children}
+    </>
   );
 } 
