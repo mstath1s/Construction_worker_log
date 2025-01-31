@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { PhotoIcon, XMarkIcon } from '@heroicons/react/24/outline'
+import { useAuth } from '../contexts/AuthContext'
 
 interface DailyLogForm {
   worker: string
@@ -41,8 +42,9 @@ const weatherOptions = [
 ]
 
 export default function DailyLog() {
+  const { user } = useAuth()
   const [formData, setFormData] = useState<DailyLogForm>({
-    worker: '',
+    worker: user?.displayName || '',
     project: '',
     date: new Date().toISOString().split('T')[0],
     startTime: '',
@@ -105,7 +107,7 @@ export default function DailyLog() {
       
       // Clear form
       setFormData({
-        worker: '',
+        worker: user?.displayName || '',
         project: '',
         date: new Date().toISOString().split('T')[0],
         startTime: '',
