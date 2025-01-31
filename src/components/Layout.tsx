@@ -1,7 +1,8 @@
 import { Disclosure } from '@headlessui/react'
 import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { UserRoles } from '../types/auth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface LayoutProps {
     user: { role: string }; // User object with a role
@@ -34,9 +35,22 @@ const getNavigationLinks = (role: string) => {
     }
 };
 
-export default function Layout({ user }: LayoutProps) {
 
+
+export default function Layout({ user }: LayoutProps) {
+    const navigate = useNavigate();
+    const { signOut } = useAuth();
     const navigation = user ? getNavigationLinks(user.role) : [];
+
+    const handleSignOut = async () => {
+        console.log("User signed out");
+        try {
+            await signOut();
+            navigate('/login');
+        } catch (err) {
+            console.log(err)
+        }
+    };
 
     return (
     <div className="bg-yellow-50">
@@ -63,6 +77,11 @@ export default function Layout({ user }: LayoutProps) {
                     </div>
                   </div>
                 </div>
+                  <div>
+                      <button onClick={handleSignOut} className="text-white bg-yellow-600 hover:bg-yellow-500 px-3 py-2 rounded-md text-sm font-medium">
+                          Sign Out
+                      </button>
+                  </div>
                 <div className="-mr-2 flex md:hidden">
                   <Disclosure.Button className="inline-flex items-center justify-center rounded-md bg-yellow-600 p-2 text-white hover:bg-yellow-500 focus:outline-none">
                     <span className="sr-only">Open main menu</span>
