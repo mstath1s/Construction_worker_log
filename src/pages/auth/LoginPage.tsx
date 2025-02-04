@@ -29,12 +29,22 @@ export function LoginPage() {
     
     try {
       // Validate form data
+      console.log('Validating form data:', formData);
       loginSchema.parse(formData);
       setValidationErrors({});
       
-      await signIn(formData.email, formData.password);
-      navigate('/');
+      console.log('Attempting sign in...');
+      const success = await signIn(formData.email, formData.password);
+      console.log('Sign in result:', success);
+      
+      if (success) {
+        console.log('Sign in successful, navigating to /');
+        navigate('/', { replace: true });
+      } else {
+        console.log('Sign in failed but no error was thrown');
+      }
     } catch (err) {
+      console.error('Error during sign in:', err);
       if (err instanceof z.ZodError) {
         const errors: Record<string, string> = {};
         err.errors.forEach((error) => {
@@ -42,6 +52,7 @@ export function LoginPage() {
             errors[error.path[0]] = error.message;
           }
         });
+        console.log('Validation errors:', errors);
         setValidationErrors(errors);
       }
     }
