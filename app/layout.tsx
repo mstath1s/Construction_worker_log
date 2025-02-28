@@ -1,9 +1,14 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Inter } from "next/font/google"
+import { Ysabeau } from "next/font/google"
 import "./globals.css"
 
-const inter = Inter({ subsets: ["latin"] })
+const roboto = Ysabeau({
+  weight: ['400', '500', '700'],
+  style: ['normal','italic'],
+  subsets: ['greek','latin']
+ // display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: "Construction Site Work Log",
@@ -17,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <body className={roboto.className}>{children}</body>
     </html>
   )
 }
