@@ -137,7 +137,7 @@ export default function NewFormPage() {
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <h1 className="text-2xl font-bold">New Work Log</h1>
+          <h1 className="text-2xl font-bold">Nέο Ημερολόγιο Εργασιών</h1>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={() => window.print()}>
@@ -160,17 +160,17 @@ export default function NewFormPage() {
           <Tabs defaultValue="project" className="w-full">
             <TabsList className="grid grid-cols-5 w-full">
               <TabsTrigger value="project">Project Info</TabsTrigger>
-              <TabsTrigger value="personnel">Personnel</TabsTrigger>
-              <TabsTrigger value="equipment">Equipment</TabsTrigger>
-              <TabsTrigger value="materials">Materials</TabsTrigger>
-              <TabsTrigger value="notes">Notes</TabsTrigger>
+              <TabsTrigger value="personnel">Εργαζόμενο Προσωπικό</TabsTrigger>
+              <TabsTrigger value="equipment">Απασχολούμενα Μηχανήματα</TabsTrigger>
+              <TabsTrigger value="materials">Προσκομισθέντα Υλικά</TabsTrigger>
+              <TabsTrigger value="notes">Παρατηρήσεις</TabsTrigger>
             </TabsList>
 
             <TabsContent value="project" className="mt-6">
               <Card>
                 <CardHeader>
                   <CardTitle>ΗΜΕΡΟΛΟΓΙΟ ΕΡΓΑΣΙΩΝ</CardTitle>
-                  <CardDescription>Enter the project details</CardDescription>
+                  <CardDescription>Παρακαλώ πληκτρολογήστε της λεπτομέριες του έργου</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -179,7 +179,7 @@ export default function NewFormPage() {
                       name="date"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Date</FormLabel>
+                          <FormLabel>Ημερομηνία</FormLabel>
                           <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
@@ -192,9 +192,9 @@ export default function NewFormPage() {
                       name="fileNumber"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>File Number</FormLabel>
+                          <FormLabel>Αύξων Αριθμός</FormLabel>
                           <FormControl>
-                            <Input placeholder="File Number" {...field} />
+                            <Input type="number" placeholder="Αύξων Αριθμός" {...field} />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -305,9 +305,9 @@ export default function NewFormPage() {
                         name="foremen"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Foremen</FormLabel>
+                            <FormLabel>Εργοδηγοί</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Foremen" {...field} />
+                            <Input type="number" placeholder="Αριθμός των Εργοδηγών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -319,9 +319,9 @@ export default function NewFormPage() {
                         name="supervisors"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Supervisors</FormLabel>
+                            <FormLabel>Επιστάτες</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Supervisors" {...field} />
+                            <Input type="number" placeholder="Αριθμός των Επιστατών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -333,9 +333,9 @@ export default function NewFormPage() {
                         name="technicians"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Technicians</FormLabel>
+                            <FormLabel>Τεχνίτες</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Technicians" {...field} />
+                            <Input type="number" placeholder="Number of Technicians" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -347,9 +347,9 @@ export default function NewFormPage() {
                         name="assistants"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Assistants</FormLabel>
+                            <FormLabel>Βοηθοί</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Assistants" {...field} />
+                            <Input type="number" placeholder="Number of Assistants" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -361,9 +361,9 @@ export default function NewFormPage() {
                         name="workers"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Workers</FormLabel>
+                            <FormLabel>Εργάτες</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Workers" {...field} />
+                            <Input type="number" placeholder="Number of Workers" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -375,9 +375,9 @@ export default function NewFormPage() {
                         name="operators"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Operators</FormLabel>
+                            <FormLabel>Χειριστές</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Operators" {...field} />
+                            <Input type="number" placeholder="Number of Operators" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -389,9 +389,9 @@ export default function NewFormPage() {
                         name="drivers"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Drivers</FormLabel>
+                            <FormLabel>Οδηγοί</FormLabel>
                             <FormControl>
-                              <Input placeholder="Number of Drivers" {...field} />
+                            <Input type="number" placeholder="Number of Drivers" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -400,7 +400,7 @@ export default function NewFormPage() {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="font-medium text-lg">ΕΚΤΕΛΟΥΜΕΝΕΣ ΕΡΓΑΣΙΕΣ (Work Executed)</h3>
+                      <h3 className="font-medium text-lg">ΕΚΤΕΛΟΥΜΕΝΕΣ ΕΡΓΑΣΙΕΣ</h3>
 
                       <FormField
                         control={form.control}

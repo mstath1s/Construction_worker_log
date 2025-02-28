@@ -7,7 +7,7 @@ export default function HomePage() {
     <div className="flex flex-col min-h-screen">
       <header className="border-b">
         <div className="container flex items-center justify-between py-4">
-          <h1 className="text-2xl font-bold">ConstructionLog</h1>
+          <h1 className="text-2xl font-bold">Ημερολόγιο Εργασιών</h1>
           <Button asChild>
             <Link href="/forms/new">
               <Plus className="w-4 h-4 mr-2" />
