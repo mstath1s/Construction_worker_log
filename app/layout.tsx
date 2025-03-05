@@ -1,10 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { Ysabeau } from "next/font/google"
+import { Tinos } from "next/font/google"
 import "./globals.css"
 
-const roboto = Ysabeau({
-  weight: ['400', '500', '700'],
+const tinos = Tinos({
+  weight: ['400', '700'],
   style: ['normal','italic'],
   subsets: ['greek','latin']
  // display: 'swap',
@@ -22,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={roboto.className}>{children}</body>
+      <body className={tinos.className}>{children}</body>
     </html>
   )
 }

@@ -56,10 +56,10 @@ export default function FormsPage() {
               <CardDescription>{form.date}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 gap-2 text-sm">
-                <div className="font-medium">Location:</div>
+              <div className="grid grid-cols-2 gap-2 text-lg">
+                <div className="font-medium">Τοποθεσία:</div>
                 <div>{form.location}</div>
-                <div className="font-medium">Contractor:</div>
+                <div className="font-medium">Ανάδοχος:</div>
                 <div>{form.contractor}</div>
               </div>
             </CardContent>

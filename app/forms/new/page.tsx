@@ -292,13 +292,12 @@ export default function NewFormPage() {
             <TabsContent value="personnel" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Personnel & Work Executed</CardTitle>
-                  <CardDescription>Enter personnel details and work executed</CardDescription>
+                  <CardTitle>Προσωπικό & Εκτελούμενες Εργασίες</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                      <h3 className="font-medium text-lg">ΕΡΓΑΖΟΜΕΝΟ ΠΡΟΣΩΠΙΚΟ (Personnel)</h3>
+                      <h3 className="font-medium text-lg">ΕΡΓΑΖΟΜΕΝΟ ΠΡΟΣΩΠΙΚΟ</h3>
 
                       <FormField
                         control={form.control}
@@ -335,7 +334,7 @@ export default function NewFormPage() {
                           <FormItem>
                             <FormLabel>Τεχνίτες</FormLabel>
                             <FormControl>
-                            <Input type="number" placeholder="Number of Technicians" {...field} />
+                            <Input type="number" placeholder="Αριθμός Τεχνιτών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -349,7 +348,7 @@ export default function NewFormPage() {
                           <FormItem>
                             <FormLabel>Βοηθοί</FormLabel>
                             <FormControl>
-                            <Input type="number" placeholder="Number of Assistants" {...field} />
+                            <Input type="number" placeholder="Αριθμός Βοηθών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -363,7 +362,7 @@ export default function NewFormPage() {
                           <FormItem>
                             <FormLabel>Εργάτες</FormLabel>
                             <FormControl>
-                            <Input type="number" placeholder="Number of Workers" {...field} />
+                            <Input type="number" placeholder="Αριθμός Εργατών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -377,7 +376,7 @@ export default function NewFormPage() {
                           <FormItem>
                             <FormLabel>Χειριστές</FormLabel>
                             <FormControl>
-                            <Input type="number" placeholder="Number of Operators" {...field} />
+                            <Input type="number" placeholder="Αριθμός Χειριστών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -391,7 +390,7 @@ export default function NewFormPage() {
                           <FormItem>
                             <FormLabel>Οδηγοί</FormLabel>
                             <FormControl>
-                            <Input type="number" placeholder="Number of Drivers" {...field} />
+                            <Input type="number" placeholder="Αριθμός Οδηγών" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -407,10 +406,9 @@ export default function NewFormPage() {
                         name="workExecuted"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Work Executed</FormLabel>
                             <FormControl>
                               <Textarea
-                                placeholder="Describe the work executed today"
+                                placeholder="Συμπληρώστε εργασίες που έγιναν σήμερα"
                                 className="min-h-[300px]"
                                 {...field}
                               />
@@ -512,8 +510,8 @@ export default function NewFormPage() {
             <TabsContent value="notes" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>ΠΑΡΑΤΗΡΗΣΕΙΣ (Notes)</CardTitle>
-                  <CardDescription>Enter additional notes</CardDescription>
+                  <CardTitle>ΠΑΡΑΤΗΡΗΣΕΙΣ</CardTitle>
+                  <CardDescription>Συμπληρώστε πρόσθετες πληροφορίες</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <FormField
@@ -546,15 +544,15 @@ export default function NewFormPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t">
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Ο ΕΡΓΟΔΗΓΟΣ (The Foreman)</p>
+                      <p className="text-xl font-medium">Ο ΕΡΓΟΔΗΓΟΣ</p>
                       <div className="h-20 border rounded-md"></div>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Ο ΕΠΙΒΛΕΠΩΝ ΜΗΧΑΝΙΚΟΣ (The Supervising Engineer)</p>
+                      <p className="text-xl font-medium">Ο ΕΠΙΒΛΕΠΩΝ ΜΗΧΑΝΙΚΟΣ</p>
                       <div className="h-20 border rounded-md"></div>
                     </div>
                     <div className="space-y-2">
-                      <p className="text-sm font-medium">Ο ΑΝΑΔΟΧΟΣ (The Contractor)</p>
+                      <p className="text-xl font-medium">Ο ΑΝΑΔΟΧΟΣ</p>
                       <div className="h-20 border rounded-md"></div>
                     </div>
                   </div>
