@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { ArrowRight, FileText, Plus } from "lucide-react"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function HomePage() {
   return (
@@ -8,12 +9,15 @@ export default function HomePage() {
       <header className="border-b">
         <div className="container flex items-center justify-between py-4">
           <h1 className="text-2xl font-bold">Ημερολόγιο Εργασιών</h1>
-          <Button asChild>
-            <Link href="/forms/new">
-              <Plus className="w-4 h-4 mr-2" />
-              New Form
-            </Link>
-          </Button>
+          <div className="flex items-center gap-4">
+            <Button asChild>
+              <Link href="/forms/new">
+                <Plus className="w-4 h-4 mr-2" />
+                New Form
+              </Link>
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       <main className="flex-1">

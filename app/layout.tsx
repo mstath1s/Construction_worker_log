@@ -2,6 +2,7 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Tinos } from "next/font/google"
 import "./globals.css"
+import { ThemeProvider } from "@/components/theme-provider"
 
 const tinos = Tinos({
   weight: ['400', '700'],
@@ -21,8 +22,12 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={tinos.className}>{children}</body>
+    <html lang="en" suppressHydrationWarning>
+      <body className={tinos.className}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   )
 }

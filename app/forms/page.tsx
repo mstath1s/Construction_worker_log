@@ -2,7 +2,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ArrowLeft, Download, Edit, Plus, Trash } from "lucide-react"
-
+import { ThemeToggle } from "@/components/theme-toggle"
 export default function FormsPage() {
   // In a real app, you would fetch this data from a database
   const forms = [
@@ -40,12 +40,15 @@ export default function FormsPage() {
           </Button>
           <h1 className="text-2xl font-bold">Work Logs</h1>
         </div>
+        <div className="flex gap-2">
         <Button asChild>
           <Link href="/forms/new">
             <Plus className="h-4 w-4 mr-2" />
             New Form
           </Link>
         </Button>
+        <ThemeToggle />
+        </div>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">

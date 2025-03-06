@@ -13,7 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { ArrowLeft, Save, Printer, Download } from "lucide-react"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-
+import { ThemeToggle } from "@/components/theme-toggle"
 const formSchema = z.object({
   // Project Information
   date: z.string().min(1, { message: "Date is required" }),
@@ -140,6 +140,7 @@ export default function NewFormPage() {
           <h1 className="text-2xl font-bold">Nέο Ημερολόγιο Εργασιών</h1>
         </div>
         <div className="flex gap-2">
+        
           <Button variant="outline" onClick={() => window.print()}>
             <Printer className="h-4 w-4 mr-2" />
             Print
@@ -152,6 +153,7 @@ export default function NewFormPage() {
             <Save className="h-4 w-4 mr-2" />
             Save
           </Button>
+          <ThemeToggle />
         </div>
       </div>
 
