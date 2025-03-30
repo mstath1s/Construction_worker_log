@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "test": "vitest",
     "lint": "next lint"
   },
   "dependencies": {
@@ -29,14 +30,19 @@
     "zod": "^3.24.2"
   },
   "devDependencies": {
+    "@testing-library/react": "^16.2.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "@types/supertest": "^6.0.3",
     "eslint": "^8",
     "eslint-config-next": "^14.2.24",
+    "mongodb-memory-server": "^10.1.4",
     "nodemon": "^3.1.9",
     "postcss": "^8",
+    "supertest": "^7.1.0",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.0.9"
   }
 }
