@@ -1,7 +1,7 @@
 // New Form Page
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -20,10 +20,11 @@ const formSchema = z.object({
   date: z.string().min(1, { message: "Date is required" }),
   fileNumber: z.string().optional(),
   projectOwner: z.string().min(1, { message: "Project owner is required" }),
-  project: z.string().min(1, { message: "Project name is required" }),
+  project: z.string().min(1, { message: "Project is required" }),
   location: z.string().min(1, { message: "Location is required" }),
   contractor: z.string().min(1, { message: "Contractor is required" }),
   engineer: z.string().min(1, { message: "Engineer is required" }),
+  temperature: z.string().optional(),
   weather: z.string().optional(),
 
   // Personnel
@@ -42,8 +43,8 @@ const formSchema = z.object({
   equipment: z
     .array(
       z.object({
-        type: z.string().optional(),
-        quantity: z.string().optional(),
+        type: z.string(),
+        quantity: z.string(),
       }),
     )
     .optional(),
@@ -52,8 +53,8 @@ const formSchema = z.object({
   materials: z
     .array(
       z.object({
-        type: z.string().optional(),
-        quantity: z.string().optional(),
+        type: z.string(),
+        quantity: z.string(),
       }),
     )
     .optional(),
@@ -66,6 +67,24 @@ const formSchema = z.object({
 export default function NewFormPage() {
   const [equipment, setEquipment] = useState([{ type: "", quantity: "" }])
   const [materials, setMaterials] = useState([{ type: "", quantity: "" }])
+  const [defaultProjectId, setDefaultProjectId] = useState<string>("")
+
+  useEffect(() => {
+    const fetchDefaultProject = async () => {
+      try {
+        const response = await fetch('/api/projects/default')
+        if (!response.ok) {
+          throw new Error('Failed to fetch default project')
+        }
+        const data = await response.json()
+        setDefaultProjectId(data._id)
+      } catch (error) {
+        console.error('Error fetching default project:', error)
+      }
+    }
+
+    fetchDefaultProject()
+  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -77,6 +96,7 @@ export default function NewFormPage() {
       location: "",
       contractor: "",
       engineer: "",
+      temperature: "",
       weather: "",
       foremen: "",
       supervisors: "",
@@ -93,10 +113,58 @@ export default function NewFormPage() {
     },
   })
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // In a real app, you would save this data to a database
-    console.log(values)
-    alert("Form saved successfully!")
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      // Transform the form data to match IWorkLog interface
+      const workLogData = {
+        date: new Date(values.date),
+        project: defaultProjectId, // Use the default project ID
+        author: "65f8a7b2c4e8f3a1d2b3c4d5", // Replace with actual user ID from auth
+        weather: values.weather || "",
+        temperature: values.temperature ? parseFloat(values.temperature) : 0,
+        workDescription: values.workExecuted || "",
+        personnel: [
+          { role: "Foremen", count: values.foremen ? parseInt(values.foremen) : 0 },
+          { role: "Supervisors", count: values.supervisors ? parseInt(values.supervisors) : 0 },
+          { role: "Technicians", count: values.technicians ? parseInt(values.technicians) : 0 },
+          { role: "Assistants", count: values.assistants ? parseInt(values.assistants) : 0 },
+          { role: "Workers", count: values.workers ? parseInt(values.workers) : 0 },
+          { role: "Operators", count: values.operators ? parseInt(values.operators) : 0 },
+          { role: "Drivers", count: values.drivers ? parseInt(values.drivers) : 0 }
+        ].filter(p => p.count > 0),
+        equipment: values.equipment?.map(e => ({
+          type: e.type || "",
+          count: e.quantity ? parseInt(e.quantity) : 0,
+          hours: 0 // You might want to add this to your form
+        })) || [],
+        materials: values.materials?.map(m => ({
+          name: m.type || "",
+          quantity: m.quantity ? parseInt(m.quantity) : 0,
+          unit: "units" // You might want to add this to your form
+        })) || [],
+        issues: "",
+        notes: values.notes || "",
+        images: []
+      };
+
+      const response = await fetch('/api/worklogs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(workLogData),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save work log');
+      }
+
+      // Redirect to the forms list page
+      window.location.href = '/forms';
+    } catch (error) {
+      console.error('Error saving work log:', error);
+      alert('Failed to save work log. Please try again.');
+    }
   }
 
   const addEquipmentRow = () => {
@@ -277,12 +345,12 @@ export default function NewFormPage() {
 
                   <FormField
                     control={form.control}
-                    name="weather"
+                    name="temperature"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Weather Conditions</FormLabel>
+                        <FormLabel>Temperature</FormLabel>
                         <FormControl>
-                          <Input placeholder="Weather Conditions" {...field} />
+                          <Input placeholder="Temperature" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>

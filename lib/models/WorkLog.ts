@@ -1,4 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import './User'; // Import User model to ensure it's registered
+import './Project'; // Import Project model to ensure it's registered
 import { IUser } from './User';
 import { IProject } from './Project';
 

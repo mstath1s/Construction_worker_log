@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import './User'; // Import User model to ensure it's registered
 import { IUser } from './User';
 
 export interface IProject extends Document {
