@@ -40,7 +40,7 @@ export default function HomePage() {
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>
-                    <Link href="/forms">
+                    <Link href="/worklogs">
                       <FileText className="w-4 h-4 mr-2" />
                       View All Forms
                     </Link>

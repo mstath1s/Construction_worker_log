@@ -1,0 +1,303 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import Link from "next/link";
+import { useParams, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft, Pencil, Trash } from "lucide-react";
+
+// Define a comprehensive WorkLog interface
+interface Personnel {
+  role: string;
+  count: number;
+}
+
+interface Equipment {
+  type: string;
+  count: number;
+  hours: number;
+}
+
+interface Material {
+  name: string;
+  quantity: number;
+  unit: string;
+}
+
+interface WorkLog {
+  _id: string;
+  date: string;
+  project: string;
+  projectName?: string;
+  author: string;
+  authorName?: string;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
+  personnel?: Personnel[];
+  equipment?: Equipment[];
+  materials?: Material[];
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export default function WorkLogDetailPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { id } = params;
+
+  const [workLog, setWorkLog] = useState<WorkLog | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchWorkLog = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch(`/api/worklogs/${id}`);
+        
+        if (!response.ok) {
+          if (response.status === 404) {
+            throw new Error('Work log not found');
+          }
+          throw new Error('Failed to fetch work log');
+        }
+        
+        const data = await response.json();
+        setWorkLog(data);
+      } catch (error) {
+        console.error('Error fetching work log:', error);
+        setError(error instanceof Error ? error.message : 'Failed to load work log');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (id) {
+      fetchWorkLog();
+    }
+  }, [id]);
+
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this work log?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/worklogs/${id}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete work log');
+      }
+
+      router.push('/worklogs');
+    } catch (error) {
+      console.error('Error deleting work log:', error);
+      alert('Failed to delete work log');
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+        </div>
+        <Card>
+          <CardHeader>
+            <Skeleton className="h-8 w-1/3 mb-2" />
+            <Skeleton className="h-4 w-1/4" />
+          </CardHeader>
+          <CardContent className="space-y-8">
+            <Skeleton className="h-20 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  if (error || !workLog) {
+    return (
+      <div className="container mx-auto py-8">
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+        </div>
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-red-500">{error || 'Work log not found'}</p>
+            <Button onClick={() => router.back()} className="mt-4">
+              Go Back
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto py-8">
+      <div className="flex justify-between items-center mb-6">
+        <Button variant="ghost" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Work Logs
+        </Button>
+        <div className="flex space-x-2">
+          <Button variant="outline" asChild>
+            <Link href={`/worklogs/${id}/edit`}>
+              <Pencil className="mr-2 h-4 w-4" /> Edit
+            </Link>
+          </Button>
+          <Button variant="destructive" onClick={handleDelete}>
+            <Trash className="mr-2 h-4 w-4" /> Delete
+          </Button>
+        </div>
+      </div>
+
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle className="text-2xl">Work Log - {new Date(workLog.date).toLocaleDateString()}</CardTitle>
+              <CardDescription>
+                Created: {workLog.createdAt ? new Date(workLog.createdAt).toLocaleString() : 'Unknown'}
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-8">
+          {/* Basic Information */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 border-b pb-2">Basic Information</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500">Date</p>
+                <p>{new Date(workLog.date).toLocaleDateString()}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Project</p>
+                <p>{workLog.projectName || workLog.project || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Author</p>
+                <p>{workLog.authorName || workLog.author || 'Unknown'}</p>
+              </div>
+              {workLog.weather && (
+                <div>
+                  <p className="text-sm text-gray-500">Weather</p>
+                  <p>{workLog.weather}</p>
+                </div>
+              )}
+              {typeof workLog.temperature === 'number' && (
+                <div>
+                  <p className="text-sm text-gray-500">Temperature</p>
+                  <p>{workLog.temperature}°C</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Work Description */}
+          <div>
+            <h3 className="text-lg font-semibold mb-4 border-b pb-2">Work Description</h3>
+            <p className="whitespace-pre-wrap">{workLog.workDescription}</p>
+          </div>
+
+          {/* Personnel */}
+          {workLog.personnel && workLog.personnel.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 border-b pb-2">Personnel</h3>
+              <div className="grid gap-4">
+                {workLog.personnel.map((person, index) => (
+                  <div key={index} className="border rounded-md p-4 bg-gray-50">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Role</p>
+                        <p>{person.role || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Count</p>
+                        <p>{person.count}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Equipment */}
+          {workLog.equipment && workLog.equipment.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 border-b pb-2">Equipment</h3>
+              <div className="grid gap-4">
+                {workLog.equipment.map((item, index) => (
+                  <div key={index} className="border rounded-md p-4 bg-gray-50">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Type</p>
+                        <p>{item.type || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Count</p>
+                        <p>{item.count}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Hours</p>
+                        <p>{item.hours}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Materials */}
+          {workLog.materials && workLog.materials.length > 0 && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 border-b pb-2">Materials</h3>
+              <div className="grid gap-4">
+                {workLog.materials.map((material, index) => (
+                  <div key={index} className="border rounded-md p-4 bg-gray-50">
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <p className="text-sm text-gray-500">Name</p>
+                        <p>{material.name || 'N/A'}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Quantity</p>
+                        <p>{material.quantity}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">Unit</p>
+                        <p>{material.unit || 'N/A'}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Notes */}
+          {workLog.notes && (
+            <div>
+              <h3 className="text-lg font-semibold mb-4 border-b pb-2">Notes</h3>
+              <p className="whitespace-pre-wrap">{workLog.notes}</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+} 

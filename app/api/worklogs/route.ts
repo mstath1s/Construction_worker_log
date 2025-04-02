@@ -1,34 +1,72 @@
 // GET all work logs
 import { NextResponse } from 'next/server';
-import dbConnect from '@/lib/mongodb';
-import WorkLog from '@/lib/models/WorkLog';
+import { dbConnect } from '@/lib/dbConnect';
+import mongoose from 'mongoose';
 
 export async function GET() {
   try {
     await dbConnect();
-    const workLogs = await WorkLog.find({})
-      .populate('project', 'name')
-      .populate('author', 'name')
-      .sort({ date: -1 });
+    const db = mongoose.connection;
+    const workLogsCollection = db.collection('worklogs');
+    
+    // Get all work logs, sort by date descending
+    const workLogs = await workLogsCollection
+      .find({})
+      .sort({ date: -1 })
+      .limit(50) // Limit to 50 most recent logs for performance
+      .toArray();
     
     return NextResponse.json(workLogs);
   } catch (error) {
     console.error('Error fetching work logs:', error);
-    return NextResponse.json({ error: 'Failed to fetch work logs' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch work logs' },
+      { status: 500 }
+    );
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const startTime = Date.now();
     const data = await request.json();
-    await dbConnect();
     
-    const workLog = new WorkLog(data);
-    await workLog.save();
+    // Connect to database with timeout handling
+    await Promise.race([
+      dbConnect(),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+      )
+    ]);
     
-    return NextResponse.json(workLog, { status: 201 });
+    const db = mongoose.connection;
+    const workLogsCollection = db.collection('worklogs');
+    
+    // Add timestamps
+    const workLogData = {
+      ...data,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    
+    // Insert the document directly
+    const result = await workLogsCollection.insertOne(workLogData);
+    
+    console.log(`Work log created in ${Date.now() - startTime}ms`);
+    
+    // Return the created work log with ID
+    return NextResponse.json({
+      _id: result.insertedId.toString(),
+      ...workLogData
+    }, { status: 201 });
   } catch (error) {
     console.error('Error creating work log:', error);
-    return NextResponse.json({ error: 'Failed to create work log' }, { status: 500 });
+    return NextResponse.json(
+      { 
+        error: 'Failed to create work log',
+        message: error instanceof Error ? error.message : 'Unknown error'
+      },
+      { status: 500 }
+    );
   }
 } 
