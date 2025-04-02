@@ -22,6 +22,8 @@ export async function GET(
     await dbConnect();
     const db = mongoose.connection;
     const workLogsCollection = db.collection('worklogs');
+    const projectsCollection = db.collection('projects');
+    const usersCollection = db.collection('users');
     
     // Find work log by ID
     const workLog = await workLogsCollection.findOne({ _id: new ObjectId(id) });
@@ -39,7 +41,45 @@ export async function GET(
       _id: workLog._id.toString()
     };
     
-    // If project and author are ObjectIds, we should convert them as well
+    // Look up project name if project ID is available
+    if (workLog.project) {
+      try {
+        let projectId = workLog.project;
+        
+        // Convert to ObjectId if it's a string
+        if (typeof projectId === 'string' && ObjectId.isValid(projectId)) {
+          projectId = new ObjectId(projectId);
+        }
+        
+        const project = await projectsCollection.findOne({ _id: projectId });
+        if (project) {
+          responseWorkLog.projectName = project.name;
+        }
+      } catch (error) {
+        console.error('Error fetching project details:', error);
+      }
+    }
+    
+    // Look up author name if author ID is available
+    if (workLog.author) {
+      try {
+        let authorId = workLog.author;
+        
+        // Convert to ObjectId if it's a string
+        if (typeof authorId === 'string' && ObjectId.isValid(authorId)) {
+          authorId = new ObjectId(authorId);
+        }
+        
+        const user = await usersCollection.findOne({ _id: authorId });
+        if (user) {
+          responseWorkLog.authorName = user.name;
+        }
+      } catch (error) {
+        console.error('Error fetching author details:', error);
+      }
+    }
+    
+    // Convert ObjectIds to strings
     if (workLog.project instanceof ObjectId) {
       responseWorkLog.project = workLog.project.toString();
     }

@@ -3,9 +3,11 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowLeft } from "lucide-react";
 
 interface WorkLog {
   _id: string;
@@ -16,6 +18,7 @@ interface WorkLog {
 }
 
 export default function WorkLogsPage() {
+  const router = useRouter();
   const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +49,11 @@ export default function WorkLogsPage() {
   if (isLoading) {
     return (
       <div className="container mx-auto py-8">
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => router.push('/')}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+          </Button>
+        </div>
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Work Logs</h1>
           <Skeleton className="h-10 w-32" />
@@ -61,6 +69,11 @@ export default function WorkLogsPage() {
 
   return (
     <div className="container mx-auto py-8">
+      <div className="mb-6">
+        <Button variant="ghost" onClick={() => router.push('/')}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+        </Button>
+      </div>
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Work Logs</h1>
         <Link href="/forms/new">

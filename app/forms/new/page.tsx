@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner'
 import { fetchProjects, fetchUsers, createProject, createUser, ProjectWithId, UserWithId } from '@/lib/data-fetchers'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { PlusCircle } from "lucide-react"
+import { PlusCircle, ArrowLeft } from "lucide-react"
 
 // Define the form schema with all fields
 const workLogSchema = z.object({
@@ -242,11 +242,27 @@ export default function NewWorkLogForm() {
   }
 
   if (isLoading) {
-    return <div>Loading...</div>
+    return (
+      <div className="container mx-auto p-4">
+        <div className="mb-6">
+          <Button variant="ghost" onClick={() => router.back()}>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Loading form...</p>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="container mx-auto p-4">
+      <div className="mb-6">
+        <Button variant="ghost" onClick={() => router.back()}>
+          <ArrowLeft className="mr-2 h-4 w-4" /> Back
+        </Button>
+      </div>
       <Card>
         <CardHeader>
           <CardTitle>New Work Log Entry</CardTitle>
