@@ -1,6 +1,17 @@
 import { NextResponse } from "next/server";
 import { dbConnect } from "@/lib/dbConnect";
 import mongoose from "mongoose";
+import { z } from 'zod';
+
+const ProjectSchema = z.object({
+  name: z.string().min(1, 'Project name is required'),
+  description: z.string().optional(),
+  location: z.string().optional(),
+  startDate: z.date().optional(),
+  endDate: z.date().optional(),
+  status: z.enum(['planned', 'in-progress', 'completed', 'on-hold']).optional(),
+  manager: z.string().optional(),
+});
 
 export async function GET() {
   try {
@@ -47,20 +58,21 @@ export async function POST(request: Request) {
     // Get project data from request
     const projectData = await request.json();
     
-    // Validate required fields
-    if (!projectData.name) {
+    // Validate project data
+    const validatedData = ProjectSchema.safeParse(projectData);
+    if (!validatedData.success) {
       return NextResponse.json(
-        { error: "Project name is required" },
+        { error: validatedData.error.issues },
         { status: 400 }
       );
     }
     
     // Create new project with required defaults
     const newProject = {
-      ...projectData,
-      startDate: projectData.startDate || new Date(),
-      endDate: projectData.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
-      status: projectData.status || 'active',
+      ...validatedData.data,
+      startDate: validatedData.data.startDate || new Date(),
+      endDate: validatedData.data.endDate || new Date(new Date().setFullYear(new Date().getFullYear() + 1)),
+      status: validatedData.data.status || 'planned',
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -71,14 +83,7 @@ export async function POST(request: Request) {
     // Return the created project with _id in the correct format
     return NextResponse.json({
       _id: result.insertedId.toString(),
-      name: newProject.name,
-      description: newProject.description,
-      location: newProject.location,
-      startDate: newProject.startDate,
-      endDate: newProject.endDate,
-      status: newProject.status,
-      createdAt: newProject.createdAt,
-      updatedAt: newProject.updatedAt
+      ...newProject
     }, { status: 201 });
   } catch (error) {
     console.error("Error creating project:", error);
@@ -87,4 +92,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

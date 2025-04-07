@@ -17,7 +17,7 @@ export interface IProject extends Document {
 const ProjectSchema: Schema = new Schema(
   {
     name: { type: String, required: true },
-    description: { type: String, required: true },
+    description: { type: String},
     location: { type: String, required: true },
     startDate: { type: Date, required: true },
     endDate: { type: Date },
@@ -35,4 +35,7 @@ const ProjectSchema: Schema = new Schema(
   { timestamps: true }
 );
 
-export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema); 
+ProjectSchema.index({ name: 1 });
+ProjectSchema.index({ status: 1 });
+
+export default mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema);

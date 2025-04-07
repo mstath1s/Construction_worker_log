@@ -67,6 +67,6 @@ export async function dbConnect(timeoutMs = 5000) {
 
 // Remove any unnecessary processing or heavy operations
 // Add performance logging
-console.time('user-creation');
-const result = await usersCollection.insertOne(newUser);
-console.timeEnd('user-creation'); 
+// console.time('user-creation');
+// const result = await usersCollection.insertOne(newUser);
+// console.timeEnd('user-creation'); 

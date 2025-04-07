@@ -16,6 +16,9 @@ import { toast } from 'sonner'
 import { fetchProjects, fetchUsers, createProject, createUser, ProjectWithId, UserWithId } from '@/lib/data-fetchers'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { PlusCircle, ArrowLeft } from "lucide-react"
+import { addPendingWorkLog } from '@/lib/indexedDBHelper'
+import { v4 as uuidv4 } from 'uuid'
+import { Toaster } from '@/components/ui/toaster'
 
 // Define the form schema with all fields
 const workLogSchema = z.object({
@@ -51,6 +54,7 @@ export default function NewWorkLogForm() {
   const [users, setUsers] = useState<UserWithId[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [isOnline, setIsOnline] = useState(true)
   
   // New state for the add project/user dialogs
   const [newProject, setNewProject] = useState({ name: '', description: '', location: '' })
@@ -127,6 +131,30 @@ export default function NewWorkLogForm() {
     console.log('Users updated:', users)
   }, [users])
 
+  useEffect(() => {
+    // Check initial online status
+    setIsOnline(navigator.onLine);
+
+    // Add event listeners for online/offline status
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success('Connection restored');
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning('You are offline. Submissions will be saved locally.');
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   const onSubmit = async (data: WorkLogFormData) => {
     try {
       setSubmitError(null)
@@ -142,25 +170,81 @@ export default function NewWorkLogForm() {
         return  
       }
 
-      const response = await fetch('/api/worklogs', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      })
+      if (isOnline) {
+        // Online submission
+        const response = await fetch('/api/worklogs', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        })
 
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'Failed to create work log')
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to create work log')
+        }
+
+        toast.success('Work log created successfully', {
+          duration: 3000,
+          position: 'top-center'
+        })
+        router.push('/worklogs')
+      } else {
+        // Offline submission
+        const tempId = uuidv4();
+        const pendingData = {
+          tempId,
+          date: data.date,
+          project: data.project,
+          author: data.author,
+          workType: 'construction', // Default work type for offline submissions
+          description: data.workDescription,
+          weather: data.weather,
+          temperature: data.temperature,
+          personnel: data.personnel?.map(p => ({
+            name: 'Unknown', // Default name for offline submissions
+            role: p.role,
+            hours: p.count // Convert count to hours
+          })) || [],
+          equipment: data.equipment?.map(e => ({
+            name: e.type,
+            hours: e.hours
+          })) || [],
+          materials: data.materials?.map(m => ({
+            name: m.name,
+            quantity: m.quantity,
+            unit: m.unit
+          })) || [],
+          notes: data.notes
+        };
+
+        await addPendingWorkLog(pendingData);
+        
+        // Show toast and wait for it to be displayed
+        await new Promise(resolve => {
+          toast.success('Work log saved locally. It will be synced when online.', {
+            duration: 3000,
+            position: 'top-center',
+            onAutoClose: resolve
+          });
+        });
+
+        // After toast is shown, try to navigate
+        try {
+          await router.push('/worklogs');
+        } catch (err) {
+          console.log('Router push failed, falling back to window.location');
+          window.location.href = '/worklogs';
+        }
       }
-
-      toast.success('Work log created successfully')
-      router.push('/worklogs')
     } catch (error) {
       console.error('Error creating work log:', error)
       setSubmitError(error instanceof Error ? error.message : 'Failed to create work log')
-      toast.error('Failed to create work log')
+      toast.error('Failed to create work log', {
+        duration: 3000,
+        position: 'top-center'
+      })
     }
   }
 
@@ -258,6 +342,7 @@ export default function NewWorkLogForm() {
 
   return (
     <div className="container mx-auto p-4">
+      <Toaster />
       <div className="mb-6">
         <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="mr-2 h-4 w-4" /> Back
@@ -265,7 +350,17 @@ export default function NewWorkLogForm() {
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>New Work Log Entry</CardTitle>
+          <div className="flex justify-between items-center">
+            <CardTitle>New Work Log Entry</CardTitle>
+            {!isOnline && (
+              <div className="flex items-center text-yellow-600">
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span className="text-sm">Offline Mode</span>
+              </div>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">

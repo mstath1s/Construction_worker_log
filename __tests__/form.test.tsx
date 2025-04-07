@@ -4,12 +4,12 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { WorkLogForm } from '../components/WorkLogForm';
 import { dbConnect } from '../lib/db';
-import { WorkLog } from '../models/WorkLog';
-import { Project } from '../models/Project';
-import { User } from '../models/User';
+import  WorkLog  from '../lib/models/WorkLog';
+import  Project , { IProject } from '../lib/models/Project';
+import  User , { IUser } from '../lib/models/User';
 import { MongoMemoryServer } from 'mongodb-memory-server';
 import mongoose from 'mongoose';
-import type { IProject, IUser } from '../types/models';
+
 
 let mongoServer: MongoMemoryServer;
 

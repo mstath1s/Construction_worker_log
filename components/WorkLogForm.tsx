@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import mongoose from 'mongoose';
 import type { WorkLogFormProps } from '../types/components';
 import type { IProject } from '../types/models';
+import { addPendingWorkLog, PendingWorkLogData } from '@/lib/indexedDBHelper';
+import { useSession } from 'next-auth/react';
+import { v4 as uuidv4 } from 'uuid';
 
 type FormData = {
   date: string;
@@ -37,8 +40,11 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
 
   const [projects, setProjects] = useState<IProject[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isOnline, setIsOnline] = useState<boolean>(true);
 
-  // Fetch projects (mock implementation)
+  const { data: session } = useSession();
+
   useEffect(() => {
     const mockProjectId = new mongoose.Types.ObjectId();
     setProjects([
@@ -56,16 +62,83 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
     ]);
   }, []);
 
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+      if (navigator.onLine) {
+        setSuccessMessage('Network connection restored.');
+        setTimeout(() => setSuccessMessage(null), 3000);
+      } else {
+        setErrorMessage('Network connection lost. Submissions will be saved locally.');
+      }
+    };
+
+    updateOnlineStatus();
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (onSubmit) {
-      onSubmit({
-        ...formData,
-        date: new Date(formData.date),
-        project: new mongoose.Types.ObjectId(formData.project)
-      });
-      setSuccessMessage('Work log submitted successfully');
-      setTimeout(() => setSuccessMessage(null), 3000);
+    setSuccessMessage(null);
+    setErrorMessage(null);
+
+    if (!session || !session.user?.id) {
+      setErrorMessage("User not authenticated.");
+      return;
+    }
+    const authorId = session.user.id;
+
+    if (navigator.onLine) {
+      console.log("Submitting online...");
+      try {
+        if (onSubmit) {
+          await onSubmit({
+            ...formData,
+            date: new Date(formData.date),
+            project: new mongoose.Types.ObjectId(formData.project),
+            author: authorId
+          });
+          setSuccessMessage('Work log submitted successfully');
+          setTimeout(() => setSuccessMessage(null), 3000);
+        } else {
+          console.warn("WorkLogForm: onSubmit prop is not provided.");
+          setErrorMessage("Form submission handler is missing.");
+        }
+      } catch (error) {
+        console.error("Online submission error:", error);
+        setErrorMessage(`Failed to submit online: ${error.message || 'Unknown error'}`);
+      }
+    } else {
+      console.log("Submitting offline...");
+      const tempId = uuidv4();
+
+      const pendingData: PendingWorkLogData = {
+        tempId: tempId,
+        author: authorId,
+        date: new Date(formData.date).toISOString(),
+        project: formData.project,
+        workType: formData.workType,
+        description: formData.description,
+        personnel: formData.personnel,
+        equipment: formData.equipment,
+        materials: formData.materials,
+      };
+
+      try {
+        await addPendingWorkLog(pendingData);
+        setSuccessMessage('Offline: Work log saved locally. It will be synced when online.');
+        setTimeout(() => setSuccessMessage(null), 5000);
+      } catch (error) {
+        console.error("Error saving pending work log:", error);
+        setErrorMessage(`Failed to save locally: ${error.message || 'Unknown error'}`);
+      }
     }
   };
 
@@ -77,7 +150,6 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
     }));
   };
 
-  // Simple functions for adding array items
   const addPersonnel = () => {
     setFormData(prev => ({
       ...prev,
@@ -107,6 +179,13 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!isOnline && (
+        <div className="rounded-md bg-yellow-50 p-4 mb-4">
+          <p className="text-sm font-medium text-yellow-800">
+            You are currently offline. Submissions will be saved locally and synced later.
+          </p>
+        </div>
+      )}
       {successMessage && (
         <div className="rounded-md bg-green-50 p-4">
           <div className="flex">
@@ -117,6 +196,20 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
             </div>
             <div className="ml-3">
               <p className="text-sm font-medium text-green-800">{successMessage}</p>
+            </div>
+          </div>
+        </div>
+      )}
+      {errorMessage && (
+        <div className="rounded-md bg-red-50 p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 102 0V5zm-1 6a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd"/>
+              </svg>
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
             </div>
           </div>
         </div>

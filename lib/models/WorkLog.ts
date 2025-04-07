@@ -48,20 +48,20 @@ const WorkLogSchema: Schema = new Schema(
     },
     weather: { type: String },
     temperature: { type: Number },
-    workDescription: { type: String, required: true },
+    workDescription: { type: String },
     personnel: [{ 
-      role: { type: String, required: true },
-      count: { type: Number, required: true }
+      role: { type: String},
+      count: { type: Number }
     }],
     equipment: [{ 
-      type: { type: String, required: true },
-      count: { type: Number, required: true },
+      type: { type: String },
+      count: { type: Number },
       hours: { type: Number }
     }],
     materials: [{ 
-      name: { type: String, required: true },
-      quantity: { type: Number, required: true },
-      unit: { type: String, required: true }
+      name: { type: String },
+      quantity: { type: Number},
+      unit: { type: String }
     }],
     issues: { type: String },
     notes: { type: String },
