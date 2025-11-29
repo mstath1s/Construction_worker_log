@@ -1,8 +1,9 @@
-'use client'; // This component handles client-side sync logic
+'use client';
 
 import React, { useEffect, useState } from 'react';
 import { initDB } from "@/lib/indexedDBHelper";
 import { syncPendingWorkLogs } from "@/lib/syncService";
+import { SYNC_DELAY_MS, TOAST_DURATION } from '@/lib/constants';
 
 export const SyncManager: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);
@@ -19,13 +20,12 @@ export const SyncManager: React.FC = () => {
       const { successful, failed } = await syncPendingWorkLogs();
       if (successful > 0 || failed > 0) {
         setSyncMessage(`Sync finished: ${successful} successful, ${failed} failed.`);
-        // Clear message after delay
-        setTimeout(() => setSyncMessage(null), 5000);
+        setTimeout(() => setSyncMessage(null), TOAST_DURATION.MEDIUM);
       }
     } catch (error) {
       console.error("Sync process error:", error);
       setSyncMessage("Error during synchronization process.");
-      setTimeout(() => setSyncMessage(null), 5000);
+      setTimeout(() => setSyncMessage(null), TOAST_DURATION.MEDIUM);
     } finally {
       setIsSyncing(false);
     }
@@ -46,16 +46,15 @@ export const SyncManager: React.FC = () => {
           }
         })
         .catch(err => console.error("SyncManager failed to initialize DB:", err));
-    }, 2000); // Delay initialization by 2 seconds
+    }, SYNC_DELAY_MS);
 
     const handleOnline = () => {
-      console.log("Application came online (detected by SyncManager).");
-      handleSync(); // Trigger sync when coming online
+      console.log("Application came online.");
+      handleSync();
     };
 
     const handleOffline = () => {
-      console.log("Application went offline (detected by SyncManager).");
-      // Don't show message when going offline
+      console.log("Application went offline.");
     };
 
     // Add event listeners
@@ -70,9 +69,9 @@ export const SyncManager: React.FC = () => {
     };
   }, []); // Empty dependency array - only run once on mount
 
-  // Render the sync status message (or null if no message)
+  // Render the sync status message
   return syncMessage ? (
-    <div style={{ position: 'fixed', bottom: '10px', left: '10px', background: 'rgba(0,0,0,0.7)', color: 'white', padding: '5px 10px', borderRadius: '5px', zIndex: 1000 }}>
+    <div className="fixed bottom-4 left-4 bg-gray-900 bg-opacity-80 text-white px-4 py-2 rounded-md z-50">
       {syncMessage}
     </div>
   ) : null;

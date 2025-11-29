@@ -4,12 +4,16 @@ import './Project'; // Import Project model to ensure it's registered
 import { IUser } from './User';
 import { IProject } from './Project';
 
+/**
+ * WorkLog Document Interface
+ * Represents a daily work log entry for construction projects
+ */
 export interface IWorkLog extends Document {
   date: Date;
   project: mongoose.Types.ObjectId | IProject;
   author: mongoose.Types.ObjectId | IUser;
-  weather: string;
-  temperature: number;
+  weather?: string;
+  temperature?: number;
   workDescription: string;
   personnel: Array<{
     role: string;
@@ -25,9 +29,9 @@ export interface IWorkLog extends Document {
     quantity: number;
     unit: string;
   }>;
-  issues: string;
-  notes: string;
-  images: string[];
+  issues?: string;
+  notes?: string;
+  images?: string[];
   createdAt: Date;
   updatedAt: Date;
 }

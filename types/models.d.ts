@@ -1,25 +1,34 @@
 import { Types } from 'mongoose';
 
+/**
+ * WorkLog interface - matches database schema
+ * This is the single source of truth for WorkLog structure
+ */
 export interface IWorkLog {
   _id?: Types.ObjectId;
-  date: string | Date;
+  date: Date;
   project: Types.ObjectId;
-  workType: string;
-  description: string;
+  author: Types.ObjectId;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
   personnel: Array<{
-    name: string;
     role: string;
-    hours: number;
+    count: number;
   }>;
   equipment: Array<{
-    name: string;
-    hours: number;
+    type: string;
+    count: number;
+    hours?: number;
   }>;
   materials: Array<{
     name: string;
     quantity: number;
     unit: string;
   }>;
+  issues?: string;
+  notes?: string;
+  images?: string[];
   createdAt?: Date;
   updatedAt?: Date;
 }

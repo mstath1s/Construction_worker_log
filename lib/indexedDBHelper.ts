@@ -2,29 +2,29 @@
 
 const DB_NAME = 'ConstructionLogDB';
 const STORE_NAME = 'pendingWorkLogs';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for schema change
 
 let db: IDBDatabase | null = null;
 
-// Data structure for offline storage
-// Based on WorkLogForm FormData + author + tempId
-// We store project/author IDs as strings
+/**
+ * Pending WorkLog data structure for offline storage
+ * Matches the database schema to eliminate transformation logic
+ * IDs are stored as strings for IndexedDB compatibility
+ */
 export interface PendingWorkLogData {
   tempId: string; // Client-side temporary ID
   author: string; // User ObjectId as string
   date: string; // ISO string format
   project: string; // Project ObjectId as string
-  workType: string;
-  description: string;
-  personnel: Array<{ name: string; role: string; hours: number }>;
-  equipment: Array<{ name: string; hours: number }>;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
+  personnel: Array<{ role: string; count: number }>;
+  equipment: Array<{ type: string; count: number; hours?: number }>;
   materials: Array<{ name: string; quantity: number; unit: string }>;
-  // Add other IWorkLog fields here if they are captured by the form
-  // weather?: string;
-  // temperature?: number;
-  // issues?: string;
-  // notes?: string;
-  // images?: string[];
+  issues?: string;
+  notes?: string;
+  images?: string[];
 }
 
 

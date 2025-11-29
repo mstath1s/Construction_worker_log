@@ -1,36 +1,180 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Construction Worker Log
+
+A modern, offline-first web application for logging daily construction work activities.
+
+## Features
+
+- **Offline-First Architecture** - Works without internet connection
+- **Auto-Sync** - Automatically syncs data when connection is restored
+- **Work Log Management** - Track personnel, equipment, materials, and work details
+- **PDF Export** - Generate PDF reports from work logs
+- **Responsive Design** - Works on desktop and mobile devices
+
+## Tech Stack
+
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Database**: MongoDB with Mongoose
+- **Styling**: Tailwind CSS + shadcn/ui components
+- **Offline Storage**: IndexedDB
+- **Forms**: React Hook Form + Zod validation
+- **Testing**: Vitest
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20.x or higher
+- MongoDB instance (local or cloud)
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.local.example .env.local
+# Edit .env.local with your MongoDB connection string
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+MONGODB_URI=your_mongodb_connection_string
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_secret_key
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+Construction_worker_log/
+├── app/                    # Next.js App Router pages
+│   ├── api/               # API routes
+│   ├── forms/             # Form pages
+│   └── worklogs/          # Work log pages
+├── components/            # React components
+│   ├── forms/            # Form-specific components
+│   └── ui/               # Reusable UI components
+├── hooks/                # Custom React hooks
+├── lib/                  # Utilities and helpers
+│   ├── models/          # Mongoose models
+│   └── constants.ts     # App-wide constants
+├── types/               # TypeScript type definitions
+└── __tests__/          # Test files
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Key Features Explained
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Offline Mode
 
-## Deploy on Vercel
+The app uses IndexedDB to queue work logs when offline:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. User submits a work log while offline
+2. Data is saved to IndexedDB with a temporary ID
+3. When connection is restored, SyncManager automatically syncs pending logs
+4. Successfully synced logs are removed from the queue
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `lib/syncService.ts` and `lib/indexedDBHelper.ts` for implementation.
+
+### Data Schema
+
+All work logs follow a unified schema (see `types/models.d.ts`):
+
+```typescript
+interface IWorkLog {
+  date: Date;
+  project: ObjectId;
+  author: ObjectId;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
+  personnel: Array<{ role: string; count: number }>;
+  equipment: Array<{ type: string; count: number; hours?: number }>;
+  materials: Array<{ name: string; quantity: number; unit: string }>;
+  notes?: string;
+}
+```
+
+## Development
+
+### Running Tests
+
+```bash
+npm test
+```
+
+### Building for Production
+
+```bash
+npm run build
+npm start
+```
+
+### Linting
+
+```bash
+npm run lint
+```
+
+## Architecture
+
+### Offline-First Design
+
+```
+User Submission
+     ↓
+[Online?] → Yes → POST /api/worklogs → MongoDB
+     ↓
+    No
+     ↓
+IndexedDB (pending queue)
+     ↓
+[Connection Restored]
+     ↓
+SyncManager → POST /api/worklogs → MongoDB
+     ↓
+Remove from IndexedDB
+```
+
+### Component Hierarchy
+
+```
+App Layout
+├── SyncManager (background sync)
+├── Page
+│   └── WorkLogForm
+│       ├── FormField (reusable)
+│       ├── Alert (reusable)
+│       └── ArrayFieldManager (reusable)
+```
+
+## Recent Improvements
+
+See [REFACTORING.md](./REFACTORING.md) for detailed documentation on recent code improvements:
+
+- ✅ Unified data schema (removed transformation logic)
+- ✅ Extracted reusable components and hooks
+- ✅ Centralized constants and configuration
+- ✅ Improved code organization and readability
+
+## Contributing
+
+1. Follow the existing code style
+2. Write tests for new features
+3. Update documentation as needed
+4. Use meaningful commit messages
+
+## License
+
+Private project - not for public distribution
+
+## Support
+
+For questions or issues, please contact the development team.

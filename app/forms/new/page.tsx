@@ -198,24 +198,12 @@ export default function NewWorkLogForm() {
           date: data.date,
           project: data.project,
           author: data.author,
-          workType: 'construction', // Default work type for offline submissions
-          description: data.workDescription,
           weather: data.weather,
           temperature: data.temperature,
-          personnel: data.personnel?.map(p => ({
-            name: 'Unknown', // Default name for offline submissions
-            role: p.role,
-            hours: p.count // Convert count to hours
-          })) || [],
-          equipment: data.equipment?.map(e => ({
-            name: e.type,
-            hours: e.hours
-          })) || [],
-          materials: data.materials?.map(m => ({
-            name: m.name,
-            quantity: m.quantity,
-            unit: m.unit
-          })) || [],
+          workDescription: data.workDescription,
+          personnel: data.personnel || [],
+          equipment: data.equipment || [],
+          materials: data.materials || [],
           notes: data.notes
         };
 

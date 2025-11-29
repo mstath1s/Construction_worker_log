@@ -5,45 +5,54 @@ import type { IProject } from '../types/models';
 import { addPendingWorkLog, PendingWorkLogData } from '@/lib/indexedDBHelper';
 import { useSession } from 'next-auth/react';
 import { v4 as uuidv4 } from 'uuid';
+import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useToast } from '@/hooks/useToast';
+import { Alert } from '@/components/ui/alert';
+import { FormField } from '@/components/forms/FormField';
+import { DEFAULT_PERSONNEL, DEFAULT_EQUIPMENT, DEFAULT_MATERIALS, TOAST_DURATION } from '@/lib/constants';
 
+/**
+ * Form data matching the unified WorkLog schema
+ */
 type FormData = {
   date: string;
   project: string;
-  workType: string;
-  description: string;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
   personnel: Array<{
-    name: string;
     role: string;
-    hours: number;
+    count: number;
   }>;
   equipment: Array<{
-    name: string;
-    hours: number;
+    type: string;
+    count: number;
+    hours?: number;
   }>;
   materials: Array<{
     name: string;
     quantity: number;
     unit: string;
   }>;
+  notes?: string;
 };
 
 export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
   const [formData, setFormData] = useState<FormData>({
     date: new Date().toISOString().split('T')[0],
     project: '',
-    workType: '',
-    description: '',
+    workDescription: '',
     personnel: [],
     equipment: [],
     materials: []
   });
 
   const [projects, setProjects] = useState<IProject[]>([]);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isOnline, setIsOnline] = useState<boolean>(true);
 
+  // Custom hooks for cleaner state management
   const { data: session } = useSession();
+  const isOnline = useOnlineStatus();
+  const { toast, showSuccess, showError } = useToast();
 
   useEffect(() => {
     const mockProjectId = new mongoose.Types.ObjectId();
@@ -62,41 +71,25 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
     ]);
   }, []);
 
+  // Notify user of connection status changes
   useEffect(() => {
-    const updateOnlineStatus = () => {
-      setIsOnline(navigator.onLine);
-      if (navigator.onLine) {
-        setSuccessMessage('Network connection restored.');
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } else {
-        setErrorMessage('Network connection lost. Submissions will be saved locally.');
-      }
-    };
-
-    updateOnlineStatus();
-
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-
-    return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
-    };
-  }, []);
+    if (isOnline) {
+      showSuccess('Network connection restored.', TOAST_DURATION.SHORT);
+    } else {
+      showError('Connection lost. Submissions will be saved locally.', TOAST_DURATION.MEDIUM);
+    }
+  }, [isOnline, showSuccess, showError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSuccessMessage(null);
-    setErrorMessage(null);
 
     if (!session || !session.user?.id) {
-      setErrorMessage("User not authenticated.");
+      showError("User not authenticated.");
       return;
     }
     const authorId = session.user.id;
 
-    if (navigator.onLine) {
-      console.log("Submitting online...");
+    if (isOnline) {
       try {
         if (onSubmit) {
           await onSubmit({
@@ -105,18 +98,17 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
             project: new mongoose.Types.ObjectId(formData.project),
             author: authorId
           });
-          setSuccessMessage('Work log submitted successfully');
-          setTimeout(() => setSuccessMessage(null), 3000);
+          showSuccess('Work log submitted successfully', TOAST_DURATION.SHORT);
         } else {
           console.warn("WorkLogForm: onSubmit prop is not provided.");
-          setErrorMessage("Form submission handler is missing.");
+          showError("Form submission handler is missing.");
         }
       } catch (error) {
         console.error("Online submission error:", error);
-        setErrorMessage(`Failed to submit online: ${error.message || 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        showError(`Failed to submit: ${errorMessage}`);
       }
     } else {
-      console.log("Submitting offline...");
       const tempId = uuidv4();
 
       const pendingData: PendingWorkLogData = {
@@ -124,20 +116,22 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
         author: authorId,
         date: new Date(formData.date).toISOString(),
         project: formData.project,
-        workType: formData.workType,
-        description: formData.description,
+        weather: formData.weather,
+        temperature: formData.temperature,
+        workDescription: formData.workDescription,
         personnel: formData.personnel,
         equipment: formData.equipment,
         materials: formData.materials,
+        notes: formData.notes,
       };
 
       try {
         await addPendingWorkLog(pendingData);
-        setSuccessMessage('Offline: Work log saved locally. It will be synced when online.');
-        setTimeout(() => setSuccessMessage(null), 5000);
+        showSuccess('Work log saved locally. Will sync when online.', TOAST_DURATION.MEDIUM);
       } catch (error) {
         console.error("Error saving pending work log:", error);
-        setErrorMessage(`Failed to save locally: ${error.message || 'Unknown error'}`);
+        const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+        showError(`Failed to save locally: ${errorMessage}`);
       }
     }
   };
@@ -153,72 +147,38 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
   const addPersonnel = () => {
     setFormData(prev => ({
       ...prev,
-      personnel: [...prev.personnel, { name: 'John Doe', role: 'Worker', hours: 8 }]
+      personnel: [...prev.personnel, DEFAULT_PERSONNEL]
     }));
-    setSuccessMessage('Personnel added successfully');
-    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   const addEquipment = () => {
     setFormData(prev => ({
       ...prev,
-      equipment: [...prev.equipment, { name: 'Excavator', hours: 4 }]
+      equipment: [...prev.equipment, DEFAULT_EQUIPMENT]
     }));
-    setSuccessMessage('Equipment added successfully');
-    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   const addMaterial = () => {
     setFormData(prev => ({
       ...prev,
-      materials: [...prev.materials, { name: 'Concrete', quantity: 10, unit: 'cubic meters' }]
+      materials: [...prev.materials, DEFAULT_MATERIALS]
     }));
-    setSuccessMessage('Material added successfully');
-    setTimeout(() => setSuccessMessage(null), 3000);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       {!isOnline && (
-        <div className="rounded-md bg-yellow-50 p-4 mb-4">
-          <p className="text-sm font-medium text-yellow-800">
-            You are currently offline. Submissions will be saved locally and synced later.
-          </p>
-        </div>
+        <Alert variant="warning">
+          You are currently offline. Submissions will be saved locally and synced later.
+        </Alert>
       )}
-      {successMessage && (
-        <div className="rounded-md bg-green-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-green-800">{successMessage}</p>
-            </div>
-          </div>
-        </div>
-      )}
-      {errorMessage && (
-        <div className="rounded-md bg-red-50 p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 102 0V5zm-1 6a1 1 0 100 2 1 1 0 000-2z" clipRule="evenodd"/>
-              </svg>
-            </div>
-            <div className="ml-3">
-              <p className="text-sm font-medium text-red-800">{errorMessage}</p>
-            </div>
-          </div>
-        </div>
+      {toast && (
+        <Alert variant={toast.type}>
+          {toast.message}
+        </Alert>
       )}
 
-      <div>
-        <label htmlFor="date" className="block text-sm font-medium text-gray-700">
-          Date
-        </label>
+      <FormField label="Date" htmlFor="date" required>
         <input
           type="date"
           id="date"
@@ -228,12 +188,9 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           required
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label htmlFor="project" className="block text-sm font-medium text-gray-700">
-          Project
-        </label>
+      <FormField label="Project" htmlFor="project" required>
         <select
           id="project"
           name="project"
@@ -249,37 +206,52 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
             </option>
           ))}
         </select>
-      </div>
+      </FormField>
 
-      <div>
-        <label htmlFor="workType" className="block text-sm font-medium text-gray-700">
-          Work Type
-        </label>
+      <FormField label="Weather" htmlFor="weather">
         <input
           type="text"
-          id="workType"
-          name="workType"
-          value={formData.workType}
+          id="weather"
+          name="weather"
+          value={formData.weather || ''}
           onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-          required
         />
-      </div>
+      </FormField>
 
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700">
-          Description
-        </label>
+      <FormField label="Temperature (°C)" htmlFor="temperature">
+        <input
+          type="number"
+          id="temperature"
+          name="temperature"
+          value={formData.temperature || ''}
+          onChange={handleChange}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        />
+      </FormField>
+
+      <FormField label="Work Description" htmlFor="workDescription" required>
         <textarea
-          id="description"
-          name="description"
-          value={formData.description}
+          id="workDescription"
+          name="workDescription"
+          value={formData.workDescription}
           onChange={handleChange}
           rows={3}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           required
         />
-      </div>
+      </FormField>
+
+      <FormField label="Notes" htmlFor="notes">
+        <textarea
+          id="notes"
+          name="notes"
+          value={formData.notes || ''}
+          onChange={handleChange}
+          rows={2}
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+        />
+      </FormField>
 
       <div className="flex space-x-2">
         <button
