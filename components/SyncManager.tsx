@@ -68,7 +68,7 @@ export const SyncManager: React.FC = () => {
       window.removeEventListener("offline", handleOffline);
       clearTimeout(timer);
     };
-  }, [isSyncing]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Render the sync status message (or null if no message)
   return syncMessage ? (
