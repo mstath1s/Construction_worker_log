@@ -78,8 +78,12 @@ describe('WorkLogForm', () => {
 
     renderWithSession(<WorkLogForm onSubmit={vi.fn()} />);
 
+    // Wait for async operations to complete
+    await waitFor(() => {
+      expect(screen.getByLabelText(/date/i)).toBeInTheDocument();
+    });
+
     // Check if form elements are rendered
-    expect(screen.getByLabelText(/date/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/project/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/work description/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /add personnel/i })).toBeInTheDocument();
@@ -93,6 +97,11 @@ describe('WorkLogForm', () => {
     await User.create(mockUser);
 
     renderWithSession(<WorkLogForm onSubmit={vi.fn()} />);
+
+    // Wait for initial render to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add personnel/i })).toBeInTheDocument();
+    });
 
     // Add personnel
     const addButton = screen.getByRole('button', { name: /add personnel/i });
@@ -110,6 +119,11 @@ describe('WorkLogForm', () => {
 
     renderWithSession(<WorkLogForm onSubmit={vi.fn()} />);
 
+    // Wait for initial render to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add equipment/i })).toBeInTheDocument();
+    });
+
     // Add equipment
     const addButton = screen.getByRole('button', { name: /add equipment/i });
     fireEvent.click(addButton);
@@ -125,6 +139,11 @@ describe('WorkLogForm', () => {
     await User.create(mockUser);
 
     renderWithSession(<WorkLogForm onSubmit={vi.fn()} />);
+
+    // Wait for initial render to complete
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /add material/i })).toBeInTheDocument();
+    });
 
     // Add material
     const addButton = screen.getByRole('button', { name: /add material/i });

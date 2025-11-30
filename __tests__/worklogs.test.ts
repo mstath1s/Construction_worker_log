@@ -6,6 +6,15 @@ import Project, { IProject } from '../lib/models/Project';
 import User, { IUser } from '../lib/models/User';
 import { GET, POST } from './test-server';
 
+// Extend global type for mongoose cache
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose: {
+    conn: typeof mongoose | null;
+    promise: Promise<typeof mongoose> | null;
+  } | undefined;
+}
+
 describe('WorkLog Tests', () => {
   let mongoServer: MongoMemoryServer;
   let defaultProject: IProject;
@@ -15,6 +24,10 @@ describe('WorkLog Tests', () => {
     // Setup in-memory MongoDB
     mongoServer = await MongoMemoryServer.create();
     const mongoUri = mongoServer.getUri();
+
+    // Set MONGODB_URI for dbConnect to use
+    process.env.MONGODB_URI = mongoUri;
+
     await mongoose.connect(mongoUri);
 
     // Create test user
@@ -38,6 +51,15 @@ describe('WorkLog Tests', () => {
   afterEach(async () => {
     await mongoose.disconnect();
     await mongoServer.stop();
+
+    // Clear the global mongoose cache to prevent connection reuse
+    if (global.mongoose) {
+      global.mongoose.conn = null;
+      global.mongoose.promise = null;
+    }
+
+    // Clean up MONGODB_URI
+    delete process.env.MONGODB_URI;
   });
 
   describe('Saving WorkLogs', () => {
