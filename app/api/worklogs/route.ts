@@ -2,20 +2,28 @@
 import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/dbConnect';
 import mongoose from 'mongoose';
+import { DEFAULT_PAGE_SIZE, DB_CONNECTION_TIMEOUT_MS } from '@/lib/constants';
 
 export async function GET() {
   try {
-    await dbConnect();
+    // Connect with timeout
+    await Promise.race([
+      dbConnect(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database connection timeout')), DB_CONNECTION_TIMEOUT_MS)
+      )
+    ]);
+
     const db = mongoose.connection;
     const workLogsCollection = db.collection('worklogs');
-    
+
     // Get all work logs, sort by date descending
     const workLogs = await workLogsCollection
       .find({})
       .sort({ date: -1 })
-      .limit(50) // Limit to 50 most recent logs for performance
+      .limit(DEFAULT_PAGE_SIZE)
       .toArray();
-    
+
     return NextResponse.json(workLogs);
   } catch (error) {
     console.error('Error fetching work logs:', error);
@@ -30,12 +38,12 @@ export async function POST(request: Request) {
   try {
     const startTime = Date.now();
     const data = await request.json();
-    
+
     // Connect to database with timeout handling
     await Promise.race([
       dbConnect(),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Database connection timeout')), 5000)
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Database connection timeout')), DB_CONNECTION_TIMEOUT_MS)
       )
     ]);
     

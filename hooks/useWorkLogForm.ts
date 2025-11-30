@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import mongoose from 'mongoose';
 import { DEFAULT_PERSONNEL, DEFAULT_EQUIPMENT, DEFAULT_MATERIALS } from '@/lib/constants';
+import type { Personnel, Equipment, Material } from '@/types/shared';
 
 /**
  * Form data matching the unified WorkLog schema
+ * Uses centralized types from @/types/shared
  */
 export type WorkLogFormData = {
   date: string;
@@ -11,20 +13,9 @@ export type WorkLogFormData = {
   weather?: string;
   temperature?: number;
   workDescription: string;
-  personnel: Array<{
-    role: string;
-    count: number;
-  }>;
-  equipment: Array<{
-    type: string;
-    count: number;
-    hours?: number;
-  }>;
-  materials: Array<{
-    name: string;
-    quantity: number;
-    unit: string;
-  }>;
+  personnel: Personnel[];
+  equipment: Equipment[];
+  materials: Material[];
   notes?: string;
 };
 

@@ -13,6 +13,7 @@ import { TOAST_DURATION } from '@/lib/constants';
 
 export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
   const [projects, setProjects] = useState<IProject[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
   // Custom hooks for cleaner separation of concerns
   const {
@@ -25,24 +26,33 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
   } = useWorkLogForm();
 
   const { isOnline, submitWorkLog } = useOfflineSync();
-  const { toast } = useToast();
+  const { toast, showError } = useToast();
 
+  // Fetch real projects from API
   useEffect(() => {
-    const mockProjectId = new mongoose.Types.ObjectId();
-    const mockManagerId = new mongoose.Types.ObjectId();
-    setProjects([
-      {
-        _id: mockProjectId,
-        name: 'Test Project',
-        description: 'Test Description',
-        location: 'Test Location',
-        startDate: new Date(),
-        endDate: new Date(),
-        status: 'in-progress',
-        manager: mockManagerId,
-      } as IProject
-    ]);
-  }, []);
+    const fetchProjects = async () => {
+      try {
+        setIsLoadingProjects(true);
+        const response = await fetch('/api/projects');
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch projects');
+        }
+
+        const data = await response.json();
+        setProjects(data);
+      } catch (error) {
+        console.error('Error fetching projects:', error);
+        showError('Failed to load projects. Please refresh the page.');
+        // Set empty array on error so form can still be used
+        setProjects([]);
+      } finally {
+        setIsLoadingProjects(false);
+      }
+    };
+
+    fetchProjects();
+  }, [showError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,8 +107,11 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
           onChange={handleChange}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
           required
+          disabled={isLoadingProjects}
         >
-          <option value="">Select a project</option>
+          <option value="">
+            {isLoadingProjects ? 'Loading projects...' : 'Select a project'}
+          </option>
           {projects.map(project => (
             <option key={project._id?.toString()} value={project._id?.toString()}>
               {project.name}

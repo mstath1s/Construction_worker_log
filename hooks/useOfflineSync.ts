@@ -31,13 +31,13 @@ export function useOfflineSync() {
     onlineSubmit,
     formData,
   }: SubmitOptions) => {
-    if (!session || !session.user) {
-      showError('User not authenticated.');
-      throw new Error('User not authenticated');
+    if (!session?.user?.id) {
+      const errorMsg = 'User not authenticated. Please sign in to submit work logs.';
+      showError(errorMsg);
+      throw new Error(errorMsg);
     }
 
-    // next-auth session.user doesn't have id by default - this needs custom configuration
-    const authorId = (session.user as any).id || 'default-author-id';
+    const authorId = session.user.id;
 
     if (isOnline) {
       // Online submission

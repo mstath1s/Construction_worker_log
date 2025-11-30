@@ -1,65 +1,15 @@
 /**
  * Shared type definitions used across the application
  * Centralizes common interfaces to maintain consistency
+ *
+ * IMPORTANT: This is the SINGLE SOURCE OF TRUTH for type definitions.
+ * All other files should import from here, never redefine types.
  */
 
-/**
- * Project type - used in dropdowns and references
- */
-export interface Project {
-  _id: string;
-  name: string;
-  description?: string;
-  location?: string;
-  status?: 'planning' | 'in-progress' | 'completed' | 'on-hold';
-  startDate?: Date;
-  endDate?: Date;
-  manager?: string;
-}
+import type { ObjectId } from 'mongoose';
 
 /**
- * Work log type - main entity
- */
-export interface WorkLog {
-  _id: string;
-  date: Date;
-  description: string;
-  project?: string;
-  author?: string;
-  weather?: string;
-  temperature?: number;
-  workDescription: string;
-  personnel?: Array<{
-    role: string;
-    count: number;
-  }>;
-  equipment?: Array<{
-    type: string;
-    count: number;
-    hours?: number;
-  }>;
-  materials?: Array<{
-    name: string;
-    quantity: number;
-    unit: string;
-  }>;
-  notes?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
-/**
- * User type
- */
-export interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role?: 'admin' | 'manager' | 'worker';
-}
-
-/**
- * Personnel entry
+ * Personnel entry in work logs
  */
 export interface Personnel {
   role: string;
@@ -67,7 +17,7 @@ export interface Personnel {
 }
 
 /**
- * Equipment entry
+ * Equipment entry in work logs
  */
 export interface Equipment {
   type: string;
@@ -76,12 +26,102 @@ export interface Equipment {
 }
 
 /**
- * Material entry
+ * Material entry in work logs
  */
 export interface Material {
   name: string;
   quantity: number;
   unit: string;
+}
+
+/**
+ * Base WorkLog interface - used for database documents
+ * Contains all fields as they exist in MongoDB
+ */
+export interface WorkLog {
+  _id: ObjectId | string;
+  date: Date;
+  project: ObjectId | string;
+  author: ObjectId | string;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
+  personnel: Personnel[];
+  equipment: Equipment[];
+  materials: Material[];
+  notes?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * WorkLog for API responses (serialized)
+ * All ObjectIds converted to strings, dates to ISO strings
+ */
+export interface WorkLogDTO {
+  _id: string;
+  date: string;
+  project: string;
+  author: string;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
+  personnel: Personnel[];
+  equipment: Equipment[];
+  materials: Material[];
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/**
+ * WorkLog creation input (from forms)
+ * Required fields only, no generated fields
+ */
+export interface CreateWorkLogInput {
+  date: Date | string;
+  project: ObjectId | string;
+  author: ObjectId | string;
+  weather?: string;
+  temperature?: number;
+  workDescription: string;
+  personnel?: Personnel[];
+  equipment?: Equipment[];
+  materials?: Material[];
+  notes?: string;
+}
+
+/**
+ * WorkLog update input (partial updates)
+ */
+export type UpdateWorkLogInput = Partial<Omit<CreateWorkLogInput, 'author'>>;
+
+/**
+ * Project interface
+ */
+export interface Project {
+  _id: ObjectId | string;
+  name: string;
+  description?: string;
+  location?: string;
+  status?: 'planning' | 'in-progress' | 'completed' | 'on-hold';
+  startDate?: Date;
+  endDate?: Date;
+  manager?: ObjectId | string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+/**
+ * User interface
+ */
+export interface User {
+  _id: ObjectId | string;
+  name: string;
+  email: string;
+  role?: 'admin' | 'manager' | 'worker';
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 /**
