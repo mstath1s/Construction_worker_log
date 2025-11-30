@@ -32,7 +32,7 @@ export interface WorkLogFormData {
 }
 
 export interface WorkLogFormProps {
-  onSubmit?: (data: WorkLogFormData) => void | Promise<void>;
+  onSubmit?: (data: WorkLogFormData) => Promise<void>;
 }
 
 export const WorkLogForm: FC<WorkLogFormProps>; 

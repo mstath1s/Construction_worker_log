@@ -6,13 +6,16 @@ import Project, { IProject } from '../lib/models/Project';
 import User, { IUser } from '../lib/models/User';
 import { GET, POST } from './test-server';
 
-// Extend global type for mongoose cache
+// Import the Cached interface from dbConnect
+interface Cached {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+// Extend global type for mongoose cache (must match dbConnect.ts)
 declare global {
   // eslint-disable-next-line no-var
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  } | undefined;
+  var mongoose: Cached | undefined;
 }
 
 describe('WorkLog Tests', () => {

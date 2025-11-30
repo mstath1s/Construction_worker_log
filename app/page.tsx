@@ -5,19 +5,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { PendingSubmissions } from "@/components/PendingSubmissions"
 import { dbConnect } from "@/lib/dbConnect"
 import mongoose from "mongoose"
-
-interface Project {
-  _id: string;
-  name: string;
-  description?: string;
-}
-
-interface WorkLog {
-  _id: string;
-  date: Date;
-  description: string;
-  project?: string;
-}
+import type { Project, WorkLog } from "@/types/shared"
 
 async function getInitialData() {
   try {
@@ -43,8 +31,17 @@ async function getInitialData() {
     const typedWorkLogs: WorkLog[] = workLogs.map(log => ({
       _id: log._id.toString(),
       date: log.date,
-      description: log.description,
-      project: log.project?.toString()
+      project: log.project?.toString() || '',
+      author: log.author?.toString() || '',
+      workDescription: log.workDescription || '',
+      personnel: log.personnel || [],
+      equipment: log.equipment || [],
+      materials: log.materials || [],
+      weather: log.weather,
+      temperature: log.temperature,
+      notes: log.notes,
+      createdAt: log.createdAt,
+      updatedAt: log.updatedAt
     }));
 
     return {

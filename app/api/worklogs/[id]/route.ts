@@ -6,10 +6,10 @@ import { ObjectId } from 'mongodb';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     
     // Validate MongoDB ObjectId
     if (!ObjectId.isValid(id)) {
@@ -101,10 +101,10 @@ export async function GET(
 // Update a work log by ID
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     const data = await request.json();
     
     // Validate MongoDB ObjectId
@@ -158,10 +158,10 @@ export async function PUT(
 // Delete a work log by ID
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const id = params.id;
+    const { id } = await params;
     
     // Validate MongoDB ObjectId
     if (!ObjectId.isValid(id)) {

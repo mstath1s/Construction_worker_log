@@ -11,8 +11,8 @@ beforeAll(() => {
   // Set base URL for fetch calls
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';
 
-  // Set test environment flag
-  process.env.NODE_ENV = 'test';
+  // NODE_ENV is already set by the test runner (vitest/jest)
+  // No need to set it manually as it's read-only
 });
 
 // Mock next-auth
