@@ -19,7 +19,9 @@ import { PlusCircle, ArrowLeft } from "lucide-react"
 import { addPendingWorkLog } from '@/lib/indexedDBHelper'
 import { v4 as uuidv4 } from 'uuid'
 import { Toaster } from '@/components/ui/toaster'
-import mongoose from 'mongoose';
+import mongoose from 'mongoose'
+import { SignatureSection } from '@/components/SignatureSection'
+import type { Signature } from '@/types/shared'
 
 // Define the form schema with all fields
 const workLogSchema = z.object({
@@ -44,7 +46,13 @@ const workLogSchema = z.object({
     quantity: z.number().min(0),
     unit: z.string()
   })).optional(),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  signatures: z.array(z.object({
+    data: z.string(),
+    signedBy: z.string(),
+    signedAt: z.union([z.string(), z.date()]),
+    role: z.string().optional()
+  })).optional()
 })
 
 type WorkLogFormData = z.infer<typeof workLogSchema>
@@ -58,7 +66,8 @@ export default function NewWorkLogForm() {
   const [isLoading, setIsLoading] = useState(true)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
-  
+  const [signatures, setSignatures] = useState<Signature[]>([])
+
   // New state for the add project/user dialogs
   const [newProject, setNewProject] = useState({ name: '', description: '', location: '' })
   const [newUser, setNewUser] = useState({ name: '', email: '' })
@@ -192,7 +201,10 @@ export default function NewWorkLogForm() {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            ...data,
+            signatures
+          }),
         })
 
         if (!response.ok) {
@@ -232,7 +244,8 @@ export default function NewWorkLogForm() {
             quantity: m.quantity,
             unit: m.unit
           })) || [],
-          notes: data.notes
+          notes: data.notes,
+          signatures: signatures
         };
 
         await addPendingWorkLog(pendingData);
@@ -721,8 +734,17 @@ export default function NewWorkLogForm() {
               </div>
             </div>
 
-            <Button 
-              type="submit" 
+            {/* Signatures Section */}
+            <div>
+              <h2 className="text-xl font-semibold mb-4 border-b pb-2">Signatures</h2>
+              <SignatureSection
+                signatures={signatures}
+                onChange={setSignatures}
+              />
+            </div>
+
+            <Button
+              type="submit"
               className="w-full"
               disabled={isSubmitting}
             >

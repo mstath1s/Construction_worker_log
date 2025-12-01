@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import mongoose from 'mongoose';
 import { DEFAULT_PERSONNEL, DEFAULT_EQUIPMENT, DEFAULT_MATERIALS } from '@/lib/constants';
-import type { Personnel, Equipment, Material } from '@/types/shared';
+import type { Personnel, Equipment, Material, Signature } from '@/types/shared';
 
 /**
  * Form data matching the unified WorkLog schema
@@ -17,6 +17,7 @@ export type WorkLogFormData = {
   equipment: Equipment[];
   materials: Material[];
   notes?: string;
+  signatures?: Signature[];
 };
 
 /**
@@ -30,7 +31,8 @@ export function useWorkLogForm() {
     workDescription: '',
     personnel: [],
     equipment: [],
-    materials: []
+    materials: [],
+    signatures: []
   });
 
   /**
@@ -143,6 +145,16 @@ export function useWorkLogForm() {
   }, []);
 
   /**
+   * Update signatures array
+   */
+  const updateSignatures = useCallback((signatures: Signature[]) => {
+    setFormData(prev => ({
+      ...prev,
+      signatures
+    }));
+  }, []);
+
+  /**
    * Reset form to initial state
    */
   const resetForm = useCallback(() => {
@@ -152,7 +164,8 @@ export function useWorkLogForm() {
       workDescription: '',
       personnel: [],
       equipment: [],
-      materials: []
+      materials: [],
+      signatures: []
     });
   }, []);
 
@@ -186,6 +199,7 @@ export function useWorkLogForm() {
       update: updateMaterial,
       remove: removeMaterial,
     },
+    updateSignatures,
     resetForm,
     toAPIFormat,
   };

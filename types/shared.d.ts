@@ -35,6 +35,16 @@ export interface Material {
 }
 
 /**
+ * Signature interface for e-signatures
+ */
+export interface Signature {
+  data: string; // Base64 encoded image data
+  signedBy: string; // Name of person who signed
+  signedAt: Date | string; // Timestamp of signature
+  role?: string; // Role of signer (e.g., "Supervisor", "Worker")
+}
+
+/**
  * Base WorkLog interface - used for database documents
  * Contains all fields as they exist in MongoDB
  */
@@ -50,6 +60,7 @@ export interface WorkLog {
   equipment: Equipment[];
   materials: Material[];
   notes?: string;
+  signatures?: Signature[]; // E-signatures from workers, supervisors, etc.
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -70,6 +81,7 @@ export interface WorkLogDTO {
   equipment: Equipment[];
   materials: Material[];
   notes?: string;
+  signatures?: Signature[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -89,6 +101,7 @@ export interface CreateWorkLogInput {
   equipment?: Equipment[];
   materials?: Material[];
   notes?: string;
+  signatures?: Signature[];
 }
 
 /**

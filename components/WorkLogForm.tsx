@@ -9,6 +9,7 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { FormField } from '@/components/forms/FormField';
 import { ArrayField } from '@/components/forms/ArrayField';
+import { SignatureSection } from '@/components/SignatureSection';
 import { TOAST_DURATION } from '@/lib/constants';
 
 export const WorkLogForm = React.memo<WorkLogFormProps>(({ onSubmit }) => {
@@ -22,6 +23,7 @@ export const WorkLogForm = React.memo<WorkLogFormProps>(({ onSubmit }) => {
     personnel,
     equipment,
     materials,
+    updateSignatures,
     resetForm,
   } = useWorkLogForm();
 
@@ -282,6 +284,11 @@ export const WorkLogForm = React.memo<WorkLogFormProps>(({ onSubmit }) => {
             </FormField>
           </div>
         )}
+      />
+
+      <SignatureSection
+        signatures={formData.signatures || []}
+        onChange={updateSignatures}
       />
 
       <Button type="submit" className="w-full">

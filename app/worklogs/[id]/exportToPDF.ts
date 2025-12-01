@@ -17,6 +17,13 @@ interface Material {
     unit: string;
 }
 
+interface Signature {
+    data: string;
+    signedBy: string;
+    signedAt: string | Date;
+    role?: string;
+}
+
 interface WorkLog {
     _id: string;
     date: string;
@@ -31,6 +38,7 @@ interface WorkLog {
     equipment?: Equipment[];
     materials?: Material[];
     notes?: string;
+    signatures?: Signature[];
     createdAt?: string;
     updatedAt?: string;
 }
@@ -162,6 +170,73 @@ export function exportToPDF(workLog: WorkLog) {
             addLine("",line)
         });
     }
+
+    // Signatures
+    if (workLog.signatures && workLog.signatures.length > 0) {
+        addHeader("Signatures");
+
+        workLog.signatures.forEach((signature, index) => {
+            // Check if we need a new page for the signature
+            if (y + 50 > pageHeight - margin) {
+                drawRect();
+                doc.addPage();
+                y = margin + 10;
+            }
+
+            // Signature info
+            doc.setFontSize(10);
+            doc.setFont("Helvetica", "bold");
+            doc.text(`Signed by: ${signature.signedBy}`, margin + 6, y);
+            y += lineGap;
+
+            if (signature.role) {
+                doc.setFont("Helvetica", "normal");
+                doc.text(`Role: ${signature.role}`, margin + 6, y);
+                y += lineGap;
+            }
+
+            doc.setFont("Helvetica", "normal");
+            doc.text(
+                `Date: ${new Date(signature.signedAt).toLocaleString()}`,
+                margin + 6,
+                y
+            );
+            y += lineGap + 2;
+
+            // Add signature image
+            try {
+                const imgWidth = 60;
+                const imgHeight = 30;
+
+                // Draw a border around the signature
+                doc.setDrawColor(200, 200, 200);
+                doc.rect(margin + 6, y, imgWidth, imgHeight);
+
+                // Add the signature image
+                doc.addImage(
+                    signature.data,
+                    'PNG',
+                    margin + 6,
+                    y,
+                    imgWidth,
+                    imgHeight
+                );
+
+                y += imgHeight + lineGap * 2;
+                lastLineY = y;
+            } catch (error) {
+                console.error('Error adding signature image:', error);
+                doc.text('(Signature image error)', margin + 6, y);
+                y += lineGap * 2;
+            }
+
+            // Add separator between signatures
+            if (workLog.signatures && index < workLog.signatures.length - 1) {
+                y += lineGap;
+            }
+        });
+    }
+
     drawRect();
     doc.save(`WorkLog-${new Date(workLog.date).toISOString().split("T")[0]}.pdf`);
 }
