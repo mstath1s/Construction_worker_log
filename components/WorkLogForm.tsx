@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import mongoose from 'mongoose';
 import type { WorkLogFormProps } from '../types/components';
 import type { IProject } from '@/lib/models';
@@ -11,7 +11,7 @@ import { FormField } from '@/components/forms/FormField';
 import { ArrayField } from '@/components/forms/ArrayField';
 import { TOAST_DURATION } from '@/lib/constants';
 
-export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
+export const WorkLogForm = React.memo<WorkLogFormProps>(({ onSubmit }) => {
   const [projects, setProjects] = useState<IProject[]>([]);
   const [isLoadingProjects, setIsLoadingProjects] = useState(true);
 
@@ -27,6 +27,15 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
 
   const { isOnline, submitWorkLog } = useOfflineSync();
   const { toast, showError } = useToast();
+
+  // Memoize project options to prevent unnecessary re-renders
+  const projectOptions = useMemo(() => {
+    return projects.map(project => (
+      <option key={project._id?.toString()} value={project._id?.toString()}>
+        {project.name}
+      </option>
+    ));
+  }, [projects]);
 
   // Fetch real projects from API
   useEffect(() => {
@@ -112,11 +121,7 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
           <option value="">
             {isLoadingProjects ? 'Loading projects...' : 'Select a project'}
           </option>
-          {projects.map(project => (
-            <option key={project._id?.toString()} value={project._id?.toString()}>
-              {project.name}
-            </option>
-          ))}
+          {projectOptions}
         </select>
       </FormField>
 
@@ -284,4 +289,4 @@ export const WorkLogForm: React.FC<WorkLogFormProps> = ({ onSubmit }) => {
       </Button>
     </form>
   );
-}; 
+}); 

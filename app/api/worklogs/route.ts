@@ -17,9 +17,17 @@ export async function GET() {
     const db = mongoose.connection;
     const workLogsCollection = db.collection('worklogs');
 
-    // Get all work logs, sort by date descending
+    // Get all work logs with projection to reduce payload, sort by date descending
     const workLogs = await workLogsCollection
-      .find({})
+      .find({}, {
+        projection: {
+          _id: 1,
+          date: 1,
+          project: 1,
+          author: 1,
+          workDescription: 1
+        }
+      })
       .sort({ date: -1 })
       .limit(DEFAULT_PAGE_SIZE)
       .toArray();

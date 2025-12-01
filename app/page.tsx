@@ -12,10 +12,22 @@ async function getInitialData() {
     await dbConnect();
     const db = mongoose.connection;
     
-    // Fetch all data in parallel
+    // Fetch all data in parallel with projections to reduce payload
     const [projects, workLogs] = await Promise.all([
-      db.collection('projects').find({}).toArray(),
-      db.collection('worklogs').find({})
+      db.collection('projects').find({}, {
+        projection: { _id: 1, name: 1, description: 1 }
+      }).toArray(),
+      db.collection('worklogs').find({}, {
+        projection: {
+          _id: 1,
+          date: 1,
+          project: 1,
+          author: 1,
+          workDescription: 1,
+          createdAt: 1,
+          updatedAt: 1
+        }
+      })
         .sort({ date: -1 })
         .limit(50)
         .toArray()

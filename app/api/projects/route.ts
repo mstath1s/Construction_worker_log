@@ -36,8 +36,10 @@ export async function GET() {
       await projectsCollection.insertOne(defaultProject);
     }
     
-    // Return all projects
-    const projects = await projectsCollection.find({}).toArray();
+    // Return all projects with projection to reduce payload
+    const projects = await projectsCollection.find({}, {
+      projection: { _id: 1, name: 1, description: 1, location: 1, status: 1 }
+    }).toArray();
     
     return NextResponse.json(projects);
   } catch (error) {

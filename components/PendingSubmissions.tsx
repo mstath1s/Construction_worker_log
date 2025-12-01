@@ -16,7 +16,7 @@ interface PendingSubmissionsProps {
   };
 }
 
-export const PendingSubmissions: React.FC<PendingSubmissionsProps> = ({ initialData }) => {
+export const PendingSubmissions = React.memo<PendingSubmissionsProps>(({ initialData }) => {
   const [pendingLogs, setPendingLogs] = useState<PendingWorkLogData[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -130,4 +130,4 @@ export const PendingSubmissions: React.FC<PendingSubmissionsProps> = ({ initialD
       )}
     </Card>
   );
-}; 
+}); 

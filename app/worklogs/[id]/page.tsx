@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {ArrowLeft, FileDown, Pencil, Trash} from "lucide-react";
-import { exportToPDF } from "./exportToPDF";
 
 // Define a comprehensive WorkLog interface
 interface Personnel {
@@ -81,6 +80,14 @@ export default function WorkLogDetailPage() {
       fetchWorkLog();
     }
   }, [id]);
+
+  const handleExportPDF = async () => {
+    if (!workLog) return;
+
+    // Dynamically import the PDF export function
+    const { exportToPDF } = await import('./exportToPDF');
+    exportToPDF(workLog);
+  };
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this work log?')) {
@@ -158,7 +165,7 @@ export default function WorkLogDetailPage() {
               <Pencil className="mr-2 h-4 w-4" /> Edit
             </Link>
           </Button>
-          <Button variant="outline" onClick={() => workLog && exportToPDF(workLog)}>
+          <Button variant="outline" onClick={handleExportPDF}>
               <FileDown className="mr-2 h-4 w-4" /> Export
           </Button>
           <Button variant="destructive" onClick={handleDelete}>
