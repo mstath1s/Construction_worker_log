@@ -3,8 +3,9 @@ import { NextResponse } from 'next/server';
 import { dbConnect } from '@/lib/dbConnect';
 import mongoose from 'mongoose';
 import { DEFAULT_PAGE_SIZE, DB_CONNECTION_TIMEOUT_MS } from '@/lib/constants';
+import { ObjectId } from 'mongodb';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     // Connect with timeout
     await Promise.race([
@@ -16,23 +17,57 @@ export async function GET() {
 
     const db = mongoose.connection;
     const workLogsCollection = db.collection('worklogs');
+    
+    // Get project filter from query parameters
+    const { searchParams } = new URL(request.url);
+    let projectId = searchParams.get('project');
+    
+    // Build query filter
+    const filter: any = {};
+    
+    if (projectId) {
+      projectId = projectId.trim()
+        .replace(/^ObjectId\(['"]?/, "")
+        .replace(/['"]?\)$/, "");
 
-    // Get all work logs with projection to reduce payload, sort by date descending
+      const isValid = mongoose.Types.ObjectId.isValid(projectId);
+
+      filter.$or = isValid
+        ? [
+            { project: projectId }, // string
+            { project: new mongoose.Types.ObjectId(projectId) }, // ObjectId
+          ]
+        : [{ project: projectId }];
+    }
+    
+    // Get work logs, sort by date descending
     const workLogs = await workLogsCollection
-      .find({}, {
+      .find(filter, {
         projection: {
           _id: 1,
           date: 1,
           project: 1,
           author: 1,
-          workDescription: 1
+          workDescription: 1,
+          createdAt: 1,
+          updatedAt: 1
         }
       })
-      .sort({ date: -1 })
+      .sort({ createdAt: -1 })
       .limit(DEFAULT_PAGE_SIZE)
       .toArray();
 
-    return NextResponse.json(workLogs);
+    const formattedWorkLogs = workLogs.map((log) => ({
+      ...log,
+      _id: log._id?.toString(),
+      project: log.project?.toString(),
+      author: log.author?.toString(),
+      date: log.date instanceof Date ? log.date.toISOString() : log.date,
+      createdAt: log.createdAt instanceof Date ? log.createdAt.toISOString() : log.createdAt,
+      updatedAt: log.updatedAt instanceof Date ? log.updatedAt.toISOString() : log.updatedAt,
+    }));
+    
+    return NextResponse.json(formattedWorkLogs);
   } catch (error) {
     console.error('Error fetching work logs:', error);
     return NextResponse.json(
@@ -61,6 +96,7 @@ export async function POST(request: Request) {
     // Add timestamps
     const workLogData = {
       ...data,
+      project: new ObjectId(data.project), 
       createdAt: new Date(),
       updatedAt: new Date()
     };

@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,6 +19,7 @@ import { PlusCircle, ArrowLeft } from "lucide-react"
 import { addPendingWorkLog } from '@/lib/indexedDBHelper'
 import { v4 as uuidv4 } from 'uuid'
 import { Toaster } from '@/components/ui/toaster'
+import mongoose from 'mongoose';
 
 // Define the form schema with all fields
 const workLogSchema = z.object({
@@ -30,7 +31,8 @@ const workLogSchema = z.object({
   workDescription: z.string().min(1, 'Work description is required'),
   personnel: z.array(z.object({
     role: z.string(),
-    count: z.number().min(0)
+    count: z.number().min(0),
+    workDetails: z.string()
   })).optional(),
   equipment: z.array(z.object({
     type: z.string(),
@@ -49,6 +51,7 @@ type WorkLogFormData = z.infer<typeof workLogSchema>
 
 export default function NewWorkLogForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const [projects, setProjects] = useState<ProjectWithId[]>([])
   const [users, setUsers] = useState<UserWithId[]>([])
@@ -72,7 +75,7 @@ export default function NewWorkLogForm() {
     resolver: zodResolver(workLogSchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
-      personnel: [{ role: '', count: 0 }],
+      personnel: [{ role: '', count: 0, workDetails: '' }],
       equipment: [{ type: '', count: 0, hours: 0 }],
       materials: [{ name: '', quantity: 0, unit: '' }]
     }
@@ -92,9 +95,21 @@ export default function NewWorkLogForm() {
         setProjects(projectsData)
         setUsers(usersData)
 
-        // Set default values if we have data
+        // Get pre-selected project from URL (e.g., /forms/new?project=123)
+        const projectFromUrl = searchParams.get('project')
+
+        // Set default project: prefer URL param if valid; otherwise first project
         if (projectsData.length > 0 && !watch('project')) {
-          setValue('project', projectsData[0]._id)
+          if (projectFromUrl) {
+            const exists = projectsData.some(p => p._id === projectFromUrl)
+            if (exists) {
+              setValue('project', projectFromUrl)
+            } else {
+              setValue('project', projectsData[0]._id)
+            }
+          } else {
+            setValue('project', projectsData[0]._id)
+          }
         }
 
         // Set default author based on session or first user if available
@@ -120,7 +135,7 @@ export default function NewWorkLogForm() {
     }
 
     loadData()
-  }, [session, setValue, watch])
+  }, [session, setValue, watch, searchParams])
 
   // Add debug output to check state updates
   useEffect(() => {
@@ -158,7 +173,7 @@ export default function NewWorkLogForm() {
   const onSubmit = async (data: WorkLogFormData) => {
     try {
       setSubmitError(null)
-      
+ 
       // Validate required fields
       if (!data.project) {
         setSubmitError('Project is required. Please select a project.')
@@ -196,14 +211,27 @@ export default function NewWorkLogForm() {
         const pendingData = {
           tempId,
           date: data.date,
-          project: data.project,
+          project: new mongoose.Types.ObjectId(data.project),
           author: data.author,
+          workType: 'construction', // Default work type for offline submissions
+          workDescription: data.workDescription,
           weather: data.weather,
           temperature: data.temperature,
-          workDescription: data.workDescription,
-          personnel: data.personnel || [],
-          equipment: data.equipment || [],
-          materials: data.materials || [],
+          personnel: data.personnel?.map(p => ({
+            name: 'Unknown', // Default name for offline submissions
+            role: p.role,
+            hours: p.count, // Convert count to hours
+            workDetails: p.workDetails
+          })) || [],
+          equipment: data.equipment?.map(e => ({
+            name: e.type,
+            hours: e.hours
+          })) || [],
+          materials: data.materials?.map(m => ({
+            name: m.name,
+            quantity: m.quantity,
+            unit: m.unit
+          })) || [],
           notes: data.notes
         };
 
@@ -238,7 +266,7 @@ export default function NewWorkLogForm() {
 
   const addPersonnel = () => {
     const currentPersonnel = watch('personnel') || []
-    setValue('personnel', [...currentPersonnel, { role: '', count: 0 }])
+    setValue('personnel', [...currentPersonnel, { role: '', count: 0, workDetails: '' }])
   }
 
   const addEquipment = () => {
@@ -575,7 +603,7 @@ export default function NewWorkLogForm() {
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Personnel</h2>
               <div className="space-y-4">
                 {watch('personnel')?.map((_, index) => (
-                  <div key={index} className="grid grid-cols-2 gap-4 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
                     <div>
                       <Label>Role</Label>
                       <Input
@@ -589,6 +617,13 @@ export default function NewWorkLogForm() {
                         type="number"
                         placeholder="Count"
                         {...register(`personnel.${index}.count`, { valueAsNumber: true })}
+                      />
+                    </div>
+                    <div>
+                      <Label>Work Details</Label>
+                      <Input
+                        placeholder="Work Details"
+                        {...register(`personnel.${index}.workDetails`)}
                       />
                     </div>
                   </div>

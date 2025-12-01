@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { FileText, Plus } from "lucide-react"
+import { FileText, Plus, FolderOpen } from "lucide-react"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { PendingSubmissions } from "@/components/PendingSubmissions"
 import { dbConnect } from "@/lib/dbConnect"
@@ -102,10 +102,16 @@ export default async function HomePage() {
                   with ease.
                 </p>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button asChild>
+                  {/* <Button asChild>
                     <Link href="/forms/new">
                       <Plus className="w-4 h-4 mr-2" />
                       Create New Form
+                    </Link>
+                  </Button> */}
+                  <Button variant="outline" asChild>
+                    <Link href="/projects">
+                      <FolderOpen className="w-4 h-4 mr-2" />
+                      View All Projects
                     </Link>
                   </Button>
                   <Button variant="outline" asChild>

@@ -1,9 +1,9 @@
 // app/worklogs/page.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,9 +17,24 @@ interface WorkLog {
   workDescription: string;
 }
 
+interface Project {
+  _id: string;
+  name: string;
+}
+
+
 export default function WorkLogsPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const projectIdParam = searchParams.get('project') || '';
+  const fromParam = searchParams.get('from') || '';
+  const toParam = searchParams.get('to') || '';
   const [workLogs, setWorkLogs] = useState<WorkLog[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [project, setProject] = useState<Project | null>(null);
+  const [filterProjectId, setFilterProjectId] = useState<string>(projectIdParam);
+  const [fromDate, setFromDate] = useState<string>(fromParam);
+  const [toDate, setToDate] = useState<string>(toParam);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,14 +42,32 @@ export default function WorkLogsPage() {
     const fetchWorkLogs = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/worklogs');
+        const url = filterProjectId ? `/api/worklogs?project=${filterProjectId}` : '/api/worklogs';
+        const [workLogsResponse, projectsResponse] = await Promise.all([
+          fetch(url),
+          fetch('/api/projects')
+        ]);
         
-        if (!response.ok) {
+        if (!workLogsResponse.ok) {
           throw new Error('Failed to fetch work logs');
         }
+
+        if (!projectsResponse.ok) {
+          throw new Error('Failed to fetch projects');
+        }
         
-        const data = await response.json();
-        setWorkLogs(data);
+        const workLogsData = await workLogsResponse.json();
+        const projectsData = await projectsResponse.json();
+
+        setWorkLogs(workLogsData);
+        setProjects(projectsData);
+        
+        if (filterProjectId) {
+          const foundProject = projectsData.find((p: Project) => p._id === filterProjectId);
+          setProject(foundProject || null);
+        } else {
+          setProject(null);
+        }
       } catch (error) {
         console.error('Error fetching work logs:', error);
         setError('Failed to load work logs');
@@ -44,7 +77,75 @@ export default function WorkLogsPage() {
     };
 
     fetchWorkLogs();
-  }, []);
+  }, [filterProjectId]);
+
+  // Keep local filter state in sync with URL query params
+  useEffect(() => {
+    setFilterProjectId(projectIdParam);
+    setFromDate(fromParam);
+    setToDate(toParam);
+  }, [projectIdParam, fromParam, toParam]);
+
+  const projectNameMap = useMemo(() => {
+    return projects.reduce<Record<string, string>>((acc, proj) => {
+      acc[proj._id] = proj.name;
+      return acc;
+    }, {});
+  }, [projects]);
+
+  const getProjectName = (projectValue: string) => {
+    if (!projectValue) return 'Unknown project';
+    return projectNameMap[projectValue] || 'Unknown project';
+  };
+
+  const hasFilters = !!(filterProjectId || fromDate || toDate);
+
+  const filteredLogs = useMemo(() => {
+    if (!hasFilters) {
+      return workLogs;
+    }
+
+    const from = fromDate ? new Date(fromDate) : null;
+    const to = toDate ? new Date(toDate) : null;
+    if (to) {
+      to.setHours(23, 59, 59, 999);
+    }
+
+    return workLogs.filter((log) => {
+      const logDate = log.date ? new Date(log.date) : null;
+
+      if (from && (!logDate || logDate < from)) {
+        return false;
+      }
+
+      if (to && (!logDate || logDate > to)) {
+        return false;
+      }
+
+      if (filterProjectId && log.project !== filterProjectId) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [workLogs, filterProjectId, fromDate, toDate, hasFilters]);
+
+  const handleApplyFilters = () => {
+    const params = new URLSearchParams();
+    if (filterProjectId) params.set('project', filterProjectId);
+    if (fromDate) params.set('from', fromDate);
+    if (toDate) params.set('to', toDate);
+
+    const query = params.toString();
+    router.push(query ? `/worklogs?${query}` : '/worklogs');
+  };
+
+  const handleClearFilters = () => {
+    setFilterProjectId('');
+    setFromDate('');
+    setToDate('');
+    router.push('/worklogs');
+  };
 
   if (isLoading) {
     return (
@@ -75,11 +176,74 @@ export default function WorkLogsPage() {
         </Button>
       </div>
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Work Logs</h1>
-        <Link href="/forms/new">
-          <Button>Create New</Button>
-        </Link>
+        <div>
+          <h1 className="text-2xl font-bold">Work Logs ({filteredLogs.length})</h1>
+          {project && filterProjectId && (
+            <p className="text-sm text-gray-500 mt-1">
+              Filtered by project: <strong>{project.name}</strong>
+            </p>
+          )}
+        </div>
+        <div className="flex gap-2">
+          <Link href="/forms/new">
+            <Button>Create New</Button>
+          </Link>
+        </div>
       </div>
+
+      <Card className="mb-6">
+        <CardContent className="pt-6">
+          <div className="grid gap-4 md:grid-cols-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                From date
+              </label>
+              <input
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                To date
+              </label>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Project
+              </label>
+              <select
+                value={filterProjectId}
+                onChange={(e) => setFilterProjectId(e.target.value)}
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white"
+              >
+                <option value="">All projects</option>
+                {projects.map((proj) => (
+                  <option key={proj._id} value={proj._id}>
+                    {proj.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex items-end gap-2">
+              <Button className="w-full" onClick={handleApplyFilters}>
+                Apply Filters
+              </Button>
+              <Button variant="outline" className="w-full" onClick={handleClearFilters}>
+                Reset
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {error && (
         <Card>
@@ -95,7 +259,18 @@ export default function WorkLogsPage() {
       {!error && workLogs.length === 0 && (
         <Card>
           <CardContent className="py-10 text-center">
-            <p className="text-gray-500">No work logs found</p>
+            <p className="text-gray-500">
+              {filterProjectId ? `No work logs found for this project` : 'No work logs found'}
+            </p>
+            {filterProjectId && (
+              <Button 
+                variant="outline" 
+                onClick={() => router.push('/worklogs')} 
+                className="mt-4 mr-2"
+              >
+                View All Work Logs
+              </Button>
+            )}
             <Link href="/forms/new">
               <Button className="mt-4">Create Your First Work Log</Button>
             </Link>
@@ -103,15 +278,35 @@ export default function WorkLogsPage() {
         </Card>
       )}
 
-      {!error && workLogs.length > 0 && (
+      {!error && workLogs.length > 0 && filteredLogs.length === 0 && (
+        <Card>
+          <CardContent className="py-10 text-center">
+            <p className="text-gray-500">
+              No work logs match the selected filters.
+            </p>
+            <Button 
+              variant="outline" 
+              onClick={handleClearFilters} 
+              className="mt-4 mr-2"
+            >
+              Clear Filters
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {!error && filteredLogs.length > 0 && (
         <div className="grid gap-4">
-          {workLogs.map((log) => (
+          {filteredLogs.map((log) => (
             <Card key={log._id}>
               <CardHeader>
                 <CardTitle>{new Date(log.date).toLocaleDateString()}</CardTitle>
               </CardHeader>
               <CardContent>
-                <p><strong>Work Description:</strong> {log.workDescription}</p>
+                <p className="text-sm text-gray-500">
+                  Project: <strong>{getProjectName(log.project)}</strong>
+                </p>
+                <p className="mt-2"><strong>Work Description:</strong> {log.workDescription}</p>
                 <div className="mt-4">
                   <Link href={`/worklogs/${log._id}`}>
                     <Button variant="outline" size="sm">View Details</Button>
