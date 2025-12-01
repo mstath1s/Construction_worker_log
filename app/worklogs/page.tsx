@@ -1,7 +1,7 @@
 // app/worklogs/page.tsx
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -23,7 +23,7 @@ interface Project {
 }
 
 
-export default function WorkLogsPage() {
+function WorkLogsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectIdParam = searchParams.get('project') || '';
@@ -318,5 +318,30 @@ export default function WorkLogsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function WorkLogsPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-8">
+        <div className="mb-6">
+          <Button variant="ghost" disabled>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Home
+          </Button>
+        </div>
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-bold">Work Logs</h1>
+          <Skeleton className="h-10 w-32" />
+        </div>
+        <div className="grid gap-4">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    }>
+      <WorkLogsPageContent />
+    </Suspense>
   );
 }

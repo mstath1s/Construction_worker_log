@@ -25,6 +25,12 @@ export interface PendingWorkLogData {
   issues?: string;
   notes?: string;
   images?: string[];
+  signatures?: Array<{
+    data: string;
+    signedBy: string;
+    signedAt: string | Date;
+    role?: string;
+  }>;
 }
 
 

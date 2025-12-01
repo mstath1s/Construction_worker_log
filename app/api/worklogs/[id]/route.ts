@@ -119,12 +119,23 @@ export async function PUT(
     const db = mongoose.connection;
     const workLogsCollection = db.collection('worklogs');
     
+    // Convert project and author to ObjectId if they are strings
+    const processedData: any = { ...data };
+
+    if (processedData.project && typeof processedData.project === 'string' && ObjectId.isValid(processedData.project)) {
+      processedData.project = new ObjectId(processedData.project);
+    }
+
+    if (processedData.author && typeof processedData.author === 'string' && ObjectId.isValid(processedData.author)) {
+      processedData.author = new ObjectId(processedData.author);
+    }
+
     // Add updatedAt timestamp
     const updatedData = {
-      ...data,
+      ...processedData,
       updatedAt: new Date()
     };
-    
+
     // Update the work log
     const result = await workLogsCollection.findOneAndUpdate(
       { _id: new ObjectId(id) },

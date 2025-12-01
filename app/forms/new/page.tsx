@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, Suspense } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -57,7 +57,7 @@ const workLogSchema = z.object({
 
 type WorkLogFormData = z.infer<typeof workLogSchema>
 
-export default function NewWorkLogForm() {
+function NewWorkLogFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { data: session } = useSession()
@@ -100,7 +100,7 @@ export default function NewWorkLogForm() {
         // Fetch projects and users data
         const projectsData = await fetchProjects()
         const usersData = await fetchUsers()
-        
+
         setProjects(projectsData)
         setUsers(usersData)
 
@@ -123,7 +123,7 @@ export default function NewWorkLogForm() {
 
         // Set default author based on session or first user if available
         if (session?.user?.email) {
-          const currentUser = usersData.find((user: UserWithId) => 
+          const currentUser = usersData.find((user: UserWithId) =>
             user.email === session.user?.email
           )
           if (currentUser) {
@@ -150,7 +150,7 @@ export default function NewWorkLogForm() {
   useEffect(() => {
     console.log('Projects updated:', projects)
   }, [projects])
-  
+
   useEffect(() => {
     console.log('Users updated:', users)
   }, [users])
@@ -182,16 +182,16 @@ export default function NewWorkLogForm() {
   const onSubmit = async (data: WorkLogFormData) => {
     try {
       setSubmitError(null)
- 
+
       // Validate required fields
       if (!data.project) {
         setSubmitError('Project is required. Please select a project.')
         return
       }
-      
+
       if (!data.author) {
         setSubmitError('Author is required. Please select an author.')
-        return  
+        return
       }
 
       if (isOnline) {
@@ -223,20 +223,18 @@ export default function NewWorkLogForm() {
         const pendingData = {
           tempId,
           date: data.date,
-          project: new mongoose.Types.ObjectId(data.project),
+          project: data.project, // Keep as string for offline storage
           author: data.author,
-          workType: 'construction', // Default work type for offline submissions
           workDescription: data.workDescription,
           weather: data.weather,
           temperature: data.temperature,
           personnel: data.personnel?.map(p => ({
-            name: 'Unknown', // Default name for offline submissions
             role: p.role,
-            hours: p.count, // Convert count to hours
-            workDetails: p.workDetails
+            count: p.count
           })) || [],
           equipment: data.equipment?.map(e => ({
-            name: e.type,
+            type: e.type,
+            count: e.count,
             hours: e.hours
           })) || [],
           materials: data.materials?.map(m => ({
@@ -249,7 +247,7 @@ export default function NewWorkLogForm() {
         };
 
         await addPendingWorkLog(pendingData);
-        
+
         // Show toast and wait for it to be displayed
         await new Promise(resolve => {
           toast.success('Work log saved locally. It will be synced when online.', {
@@ -295,24 +293,24 @@ export default function NewWorkLogForm() {
   const handleAddProject = async () => {
     try {
       setIsAddingProject(true)
-      
+
       // Use the helper function instead of direct fetch
       const createdProject = await createProject(newProject)
-      
+
       if (!createdProject) {
         throw new Error('Failed to create project')
       }
-      
+
       console.log('Created project:', createdProject)
-      
+
       // Add the new project to the list and select it
       setProjects(prevProjects => [...prevProjects, createdProject])
       setValue('project', createdProject._id)
-      
+
       // Reset the form
       setNewProject({ name: '', description: '', location: '' })
       toast.success('Project created successfully')
-      
+
       // Close the dialog programmatically
       projectDialogCloseRef.current?.click()
     } catch (error) {
@@ -326,24 +324,24 @@ export default function NewWorkLogForm() {
   const handleAddUser = async () => {
     try {
       setIsAddingUser(true)
-      
+
       // Use the helper function instead of direct fetch
       const createdUser = await createUser(newUser)
-      
+
       if (!createdUser) {
         throw new Error('Failed to create user')
       }
-      
+
       console.log('Created user:', createdUser)
-      
+
       // Add the new user to the list and select it
       setUsers(prevUsers => [...prevUsers, createdUser])
       setValue('author', createdUser._id)
-      
+
       // Reset the form
       setNewUser({ name: '', email: '' })
       toast.success('User created successfully')
-      
+
       // Close the dialog programmatically
       userDialogCloseRef.current?.click()
     } catch (error) {
@@ -396,13 +394,13 @@ export default function NewWorkLogForm() {
             {/* Basic Information Section */}
             <div>
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Basic Information</h2>
-              
+
               {submitError && (
                 <div className="bg-red-50 border border-red-200 text-red-800 rounded-md p-4 mb-4">
                   <p>{submitError}</p>
                 </div>
               )}
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="date">Date</Label>
@@ -418,7 +416,7 @@ export default function NewWorkLogForm() {
                   <Label htmlFor="project">Project</Label>
                   <div className="flex space-x-2">
                     <div className="flex-1">
-                      <Select 
+                      <Select
                         onValueChange={(value) => setValue('project', value)}
                         value={watch('project') || ''}
                         required
@@ -484,8 +482,8 @@ export default function NewWorkLogForm() {
                           <Button type="button" variant="outline" onClick={() => {
                             setNewProject({ name: '', description: '', location: '' })
                           }}>Cancel</Button>
-                          <Button 
-                            type="button" 
+                          <Button
+                            type="button"
                             onClick={handleAddProject}
                             disabled={isAddingProject || !newProject.name}
                           >
@@ -503,7 +501,7 @@ export default function NewWorkLogForm() {
                   <Label htmlFor="author">Author</Label>
                   <div className="flex space-x-2">
                     <div className="flex-1">
-                      <Select 
+                      <Select
                         onValueChange={(value) => setValue('author', value)}
                         value={watch('author') || ''}
                         required
@@ -561,7 +559,7 @@ export default function NewWorkLogForm() {
                           <Button type="button" variant="outline" onClick={() => {
                             setNewUser({ name: '', email: '' })
                           }}>Cancel</Button>
-                          <Button 
+                          <Button
                             type="button"
                             onClick={handleAddUser}
                             disabled={isAddingUser || !newUser.name || !newUser.email}
@@ -762,3 +760,21 @@ export default function NewWorkLogForm() {
   )
 }
 
+export default function NewWorkLogForm() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto p-4">
+        <div className="mb-6">
+          <Button variant="ghost" disabled>
+            <ArrowLeft className="mr-2 h-4 w-4" /> Back
+          </Button>
+        </div>
+        <div className="flex items-center justify-center h-64">
+          <p className="text-gray-500">Loading form...</p>
+        </div>
+      </div>
+    }>
+      <NewWorkLogFormContent />
+    </Suspense>
+  );
+}
