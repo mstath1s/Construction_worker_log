@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useParams, useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { z } from 'zod'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -18,40 +17,7 @@ import { Toaster } from '@/components/ui/toaster'
 import { SignatureSection } from '@/components/SignatureSection'
 import type { Signature } from '@/types/shared'
 import { Skeleton } from "@/components/ui/skeleton"
-
-// Define the form schema with all fields
-const workLogSchema = z.object({
-  date: z.string().min(1, 'Date is required'),
-  project: z.string().min(1, 'Project is required'),
-  author: z.string().min(1, 'Author is required'),
-  weather: z.string().optional(),
-  temperature: z.number().optional(),
-  workDescription: z.string().min(1, 'Work description is required'),
-  personnel: z.array(z.object({
-    role: z.string(),
-    count: z.number().min(0),
-    workDetails: z.string()
-  })).optional(),
-  equipment: z.array(z.object({
-    type: z.string(),
-    count: z.number().min(0),
-    hours: z.number().min(0)
-  })).optional(),
-  materials: z.array(z.object({
-    name: z.string(),
-    quantity: z.number().min(0),
-    unit: z.string()
-  })).optional(),
-  notes: z.string().optional(),
-  signatures: z.array(z.object({
-    data: z.string(),
-    signedBy: z.string(),
-    signedAt: z.union([z.string(), z.date()]),
-    role: z.string().optional()
-  })).optional()
-})
-
-type WorkLogFormData = z.infer<typeof workLogSchema>
+import { workLogSchema, WorkLogFormData, DEFAULT_PERSONNEL, DEFAULT_EQUIPMENT, DEFAULT_MATERIAL } from '@/lib/schemas/workLogSchema'
 
 export default function EditWorkLogForm() {
   const params = useParams()
@@ -179,17 +145,17 @@ export default function EditWorkLogForm() {
 
   const addPersonnel = () => {
     const currentPersonnel = watch('personnel') || []
-    setValue('personnel', [...currentPersonnel, { role: '', count: 0, workDetails: '' }])
+    setValue('personnel', [...currentPersonnel, DEFAULT_PERSONNEL])
   }
 
   const addEquipment = () => {
     const currentEquipment = watch('equipment') || []
-    setValue('equipment', [...currentEquipment, { type: '', count: 0, hours: 0 }])
+    setValue('equipment', [...currentEquipment, DEFAULT_EQUIPMENT])
   }
 
   const addMaterial = () => {
     const currentMaterials = watch('materials') || []
-    setValue('materials', [...currentMaterials, { name: '', quantity: 0, unit: '' }])
+    setValue('materials', [...currentMaterials, DEFAULT_MATERIAL])
   }
 
   if (isLoading) {

@@ -1,8 +1,7 @@
 // GET a single work log by ID
-import { NextResponse } from 'next/server';
-import { dbConnect } from '@/lib/dbConnect';
-import mongoose from 'mongoose';
-import { ObjectId } from 'mongodb';
+import { DatabaseUtils } from '@/lib/api/database';
+import { ValidationUtils } from '@/lib/api/validation';
+import { ApiError } from '@/lib/api/errorHandling';
 
 export async function GET(
   request: Request,
@@ -10,91 +9,64 @@ export async function GET(
 ) {
   try {
     const { id } = await params;
-    
-    // Validate MongoDB ObjectId
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid work log ID' },
-        { status: 400 }
-      );
-    }
-    
-    await dbConnect();
-    const db = mongoose.connection;
-    const workLogsCollection = db.collection('worklogs');
-    const projectsCollection = db.collection('projects');
-    const usersCollection = db.collection('users');
-    
-    // Find work log by ID
-    const workLog = await workLogsCollection.findOne({ _id: new ObjectId(id) });
-    
-    if (!workLog) {
-      return NextResponse.json(
-        { error: 'Work log not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Create a properly typed response object
-    const responseWorkLog: any = {
-      ...workLog,
-      _id: workLog._id.toString()
-    };
-    
-    // Look up project name if project ID is available
-    if (workLog.project) {
-      try {
-        let projectId = workLog.project;
-        
-        // Convert to ObjectId if it's a string
-        if (typeof projectId === 'string' && ObjectId.isValid(projectId)) {
-          projectId = new ObjectId(projectId);
-        }
-        
-        const project = await projectsCollection.findOne({ _id: projectId });
-        if (project) {
-          responseWorkLog.projectName = project.name;
-        }
-      } catch (error) {
-        console.error('Error fetching project details:', error);
+    const objectId = ValidationUtils.validateObjectId(id);
+
+    return await DatabaseUtils.withConnection(async (db) => {
+      const workLogsCollection = db.collection('worklogs');
+      const projectsCollection = db.collection('projects');
+      const usersCollection = db.collection('users');
+
+      // Find work log by ID
+      const workLog = await workLogsCollection.findOne({ _id: objectId });
+
+      if (!workLog) {
+        return ApiError.notFound('Work log');
       }
-    }
-    
-    // Look up author name if author ID is available
-    if (workLog.author) {
-      try {
-        let authorId = workLog.author;
-        
-        // Convert to ObjectId if it's a string
-        if (typeof authorId === 'string' && ObjectId.isValid(authorId)) {
-          authorId = new ObjectId(authorId);
+
+      // Create response object
+      const responseWorkLog: any = {
+        ...workLog,
+        _id: workLog._id.toString()
+      };
+
+      // Look up project name if project ID is available
+      if (workLog.project) {
+        try {
+          const projectId = ValidationUtils.normalizeOptionalObjectId(workLog.project);
+          if (projectId) {
+            const project = await projectsCollection.findOne({ _id: projectId });
+            if (project) {
+              responseWorkLog.projectName = project.name;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching project details:', error);
         }
-        
-        const user = await usersCollection.findOne({ _id: authorId });
-        if (user) {
-          responseWorkLog.authorName = user.name;
-        }
-      } catch (error) {
-        console.error('Error fetching author details:', error);
       }
-    }
-    
-    // Convert ObjectIds to strings
-    if (workLog.project instanceof ObjectId) {
-      responseWorkLog.project = workLog.project.toString();
-    }
-    
-    if (workLog.author instanceof ObjectId) {
-      responseWorkLog.author = workLog.author.toString();
-    }
-    
-    return NextResponse.json(responseWorkLog);
+
+      // Look up author name if author ID is available
+      if (workLog.author) {
+        try {
+          const authorId = ValidationUtils.normalizeOptionalObjectId(workLog.author);
+          if (authorId) {
+            const user = await usersCollection.findOne({ _id: authorId });
+            if (user) {
+              responseWorkLog.authorName = user.name;
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching author details:', error);
+        }
+      }
+
+      // Convert ObjectIds to strings
+      responseWorkLog.project = ValidationUtils.objectIdToString(workLog.project);
+      responseWorkLog.author = ValidationUtils.objectIdToString(workLog.author);
+
+      return ApiError.success(responseWorkLog);
+    });
   } catch (error) {
-    console.error('Error fetching work log:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch work log' },
-      { status: 500 }
-    );
+    return ApiError.handle(error);
   }
 }
 
@@ -106,63 +78,47 @@ export async function PUT(
   try {
     const { id } = await params;
     const data = await request.json();
-    
-    // Validate MongoDB ObjectId
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid work log ID' },
-        { status: 400 }
+    const objectId = ValidationUtils.validateObjectId(id);
+
+    return await DatabaseUtils.withCollection('worklogs', async (workLogsCollection) => {
+      // Convert project and author to ObjectId if they are strings
+      const processedData: any = { ...data };
+
+      if (processedData.project) {
+        processedData.project = ValidationUtils.normalizeObjectId(processedData.project);
+      }
+
+      if (processedData.author) {
+        processedData.author = ValidationUtils.normalizeObjectId(processedData.author);
+      }
+
+      // Add updatedAt timestamp
+      const updatedData = {
+        ...processedData,
+        updatedAt: new Date()
+      };
+
+      // Update the work log
+      const result = await workLogsCollection.findOneAndUpdate(
+        { _id: objectId },
+        { $set: updatedData },
+        { returnDocument: 'after' }
       );
-    }
-    
-    await dbConnect();
-    const db = mongoose.connection;
-    const workLogsCollection = db.collection('worklogs');
-    
-    // Convert project and author to ObjectId if they are strings
-    const processedData: any = { ...data };
 
-    if (processedData.project && typeof processedData.project === 'string' && ObjectId.isValid(processedData.project)) {
-      processedData.project = new ObjectId(processedData.project);
-    }
+      if (!result) {
+        return ApiError.notFound('Work log');
+      }
 
-    if (processedData.author && typeof processedData.author === 'string' && ObjectId.isValid(processedData.author)) {
-      processedData.author = new ObjectId(processedData.author);
-    }
+      // Create response object
+      const responseWorkLog: any = {
+        ...result,
+        _id: result._id.toString()
+      };
 
-    // Add updatedAt timestamp
-    const updatedData = {
-      ...processedData,
-      updatedAt: new Date()
-    };
-
-    // Update the work log
-    const result = await workLogsCollection.findOneAndUpdate(
-      { _id: new ObjectId(id) },
-      { $set: updatedData },
-      { returnDocument: 'after' }
-    );
-    
-    if (!result) {
-      return NextResponse.json(
-        { error: 'Work log not found' },
-        { status: 404 }
-      );
-    }
-    
-    // Create a properly typed response object
-    const responseWorkLog: any = {
-      ...result,
-      _id: result._id.toString()
-    };
-    
-    return NextResponse.json(responseWorkLog);
+      return ApiError.success(responseWorkLog);
+    });
   } catch (error) {
-    console.error('Error updating work log:', error);
-    return NextResponse.json(
-      { error: 'Failed to update work log' },
-      { status: 500 }
-    );
+    return ApiError.handle(error);
   }
 }
 
@@ -173,35 +129,19 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
-    // Validate MongoDB ObjectId
-    if (!ObjectId.isValid(id)) {
-      return NextResponse.json(
-        { error: 'Invalid work log ID' },
-        { status: 400 }
-      );
-    }
-    
-    await dbConnect();
-    const db = mongoose.connection;
-    const workLogsCollection = db.collection('worklogs');
-    
-    // Delete the work log
-    const result = await workLogsCollection.deleteOne({ _id: new ObjectId(id) });
-    
-    if (result.deletedCount === 0) {
-      return NextResponse.json(
-        { error: 'Work log not found' },
-        { status: 404 }
-      );
-    }
-    
-    return NextResponse.json({ success: true });
+    const objectId = ValidationUtils.validateObjectId(id);
+
+    return await DatabaseUtils.withCollection('worklogs', async (workLogsCollection) => {
+      // Delete the work log
+      const result = await workLogsCollection.deleteOne({ _id: objectId });
+
+      if (result.deletedCount === 0) {
+        return ApiError.notFound('Work log');
+      }
+
+      return ApiError.success({ success: true });
+    });
   } catch (error) {
-    console.error('Error deleting work log:', error);
-    return NextResponse.json(
-      { error: 'Failed to delete work log' },
-      { status: 500 }
-    );
+    return ApiError.handle(error);
   }
 } 
