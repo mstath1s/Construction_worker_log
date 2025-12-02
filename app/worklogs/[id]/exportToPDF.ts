@@ -1,4 +1,5 @@
 import jsPDF from "jspdf";
+import robotoRegular from "../../fonts/Roboto-Regular.js"; 
 
 interface Personnel {
     role: string;
@@ -45,6 +46,8 @@ interface WorkLog {
 
 export function exportToPDF(workLog: WorkLog) {
     const doc = new jsPDF();
+    doc.addFileToVFS("Roboto-Regular.ttf", robotoRegular);
+    doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
     const pageWidth = doc.internal.pageSize.getWidth();
     const pageHeight = doc.internal.pageSize.getHeight();
     const margin = 15;
@@ -73,9 +76,9 @@ export function exportToPDF(workLog: WorkLog) {
         }
 
         doc.setFontSize(10);
-        doc.setFont("Helvetica", "normal");
+        doc.setFont("Roboto", "normal");
         doc.text(`${label ?? ""}`, margin + 6, y);
-        doc.setFont("Helvetica", "normal");
+        doc.setFont("Roboto", "normal");
         doc.text(`${value ?? "N/A"}`, label ? margin + 40 : margin + 6, y);
         y += lineGap;
         lastLineY = y;
@@ -89,7 +92,7 @@ export function exportToPDF(workLog: WorkLog) {
         }
         doc.setFontSize(14);
         y += lineGap;
-        doc.setFont("Helvetica", "bold");
+        doc.setFont("Roboto", "bold");
         doc.text(`${label}`, margin + 6, y);
         y += 4;
         doc.line(margin + 6, y, pageWidth - 2 * margin +6, y);
@@ -99,7 +102,7 @@ export function exportToPDF(workLog: WorkLog) {
 
 
     doc.setFontSize(18);
-    doc.setFont("Helvetica", "bold");
+    doc.setFont("Roboto", "bold");
     doc.text("Work Log - " + new Date(workLog.date).toLocaleDateString(), margin + 6, y + 10)
     y += lineGap + 10;
     addLine("Created: ", workLog.createdAt ? new Date(workLog.createdAt).toLocaleString() : 'Unknown');

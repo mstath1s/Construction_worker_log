@@ -7,11 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import {ArrowLeft, FileDown, Pencil, Trash} from "lucide-react";
+import { FORM_STATUS, FORM_STATUS_CLASSES, FORM_STATUS_LABELS, LABELS } from "@/components/constants/constantValues";
+import "../worklogs.css";
 
 // Define a comprehensive WorkLog interface
 interface Personnel {
   role: string;
   count: number;
+  workDetails: string;
 }
 
 interface Equipment {
@@ -31,6 +34,7 @@ interface WorkLog {
   date: string;
   project: string;
   projectName?: string;
+  projectLocation?:string;
   author: string;
   authorName?: string;
   weather?: string;
@@ -40,6 +44,7 @@ interface WorkLog {
   equipment?: Equipment[];
   materials?: Material[];
   notes?: string;
+  status?:string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -68,6 +73,7 @@ export default function WorkLogDetailPage() {
         
         const data = await response.json();
         setWorkLog(data);
+
       } catch (error) {
         console.error('Error fetching work log:', error);
         setError(error instanceof Error ? error.message : 'Failed to load work log');
@@ -176,13 +182,18 @@ export default function WorkLogDetailPage() {
 
       <Card>
         <CardHeader>
-          <div className="flex justify-between items-start">
+          <div className="flex justify-between items-start w-full">
             <div>
-              <CardTitle className="text-2xl">Work Log - {new Date(workLog.date).toLocaleDateString()}</CardTitle>
+              <CardTitle className="text-2xl">
+              <span>Work Log - {new Date(workLog.date).toLocaleDateString()}</span>                   
+              </CardTitle>
               <CardDescription>
                 Created: {workLog.createdAt ? new Date(workLog.createdAt).toLocaleString() : 'Unknown'}
-              </CardDescription>
+              </CardDescription>              
             </div>
+            <span className={`work-log-status  ${FORM_STATUS_CLASSES[workLog.status as keyof typeof FORM_STATUS_CLASSES]}`}>
+              {FORM_STATUS_LABELS[workLog.status as keyof typeof FORM_STATUS_LABELS] ?? "N/A"}
+            </span>  
           </div>
         </CardHeader>
         <CardContent className="space-y-8">
@@ -197,6 +208,10 @@ export default function WorkLogDetailPage() {
               <div>
                 <p className="text-sm text-gray-500">Project</p>
                 <p>{workLog.projectName || workLog.project || 'Unknown'}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Project Location</p>
+                <p>{workLog.projectLocation || workLog.project || 'Unknown'}</p>
               </div>
               <div>
                 <p className="text-sm text-gray-500">Author</p>
@@ -217,27 +232,31 @@ export default function WorkLogDetailPage() {
             </div>
           </div>
 
-          {/* Work Description */}
+          {/* Work Description
           <div>
             <h3 className="text-lg font-semibold mb-4 border-b pb-2">Work Description</h3>
             <p className="whitespace-pre-wrap">{workLog.workDescription}</p>
-          </div>
+          </div> */}
 
           {/* Personnel */}
           {workLog.personnel && workLog.personnel.length > 0 && (
             <div>
-              <h3 className="text-lg font-semibold mb-4 border-b pb-2">Personnel</h3>
+              <h3 className="text-lg font-semibold mb-4 border-b pb-2">{LABELS.personnel}</h3>
               <div className="grid gap-4">
                 {workLog.personnel.map((person, index) => (
                   <div key={index} className="border rounded-md p-4 bg-gray-50">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-sm text-gray-500">Role</p>
-                        <p>{person.role || 'N/A'}</p>
+                        <p className="text-sm text-gray-500">{LABELS.role}</p>
+                        <strong>{person.role || 'N/A'}</strong>
                       </div>
                       <div>
-                        <p className="text-sm text-gray-500">Count</p>
+                        <p className="text-sm text-gray-500">{LABELS.count}</p>
                         <p>{person.count}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm text-gray-500">{LABELS.workDetails}</p>
+                        <p>{person.workDetails}</p>
                       </div>
                     </div>
                   </div>

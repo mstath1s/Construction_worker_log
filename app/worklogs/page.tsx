@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
+import { FORM_STATUS_LABELS, LABELS, FORM_STATUS, FORM_STATUS_CLASSES } from "@/components/constants/constantValues";
+import "./worklogs.css";
 
 interface WorkLog {
   _id: string;
@@ -15,6 +17,7 @@ interface WorkLog {
   project: string;
   author: string;
   workDescription: string;
+  status: string;
 }
 
 interface Project {
@@ -307,6 +310,11 @@ function WorkLogsPageContent() {
                   Project: <strong>{getProjectName(log.project)}</strong>
                 </p>
                 <p className="mt-2"><strong>Work Description:</strong> {log.workDescription}</p>
+                  <p className="mt-2"><strong>{LABELS.status}:</strong>
+                      <span className={`work-log-list-status ${FORM_STATUS_CLASSES[log.status as keyof typeof FORM_STATUS_CLASSES]}`}>
+                        {FORM_STATUS_LABELS[log.status as keyof typeof FORM_STATUS_LABELS] ?? "Ν/Α"}
+                        </span>
+                  </p>
                 <div className="mt-4">
                   <Link href={`/worklogs/${log._id}`}>
                     <Button variant="outline" size="sm">View Details</Button>

@@ -18,6 +18,7 @@ export interface IWorkLog extends Document {
   personnel: Array<{
     role: string;
     count: number;
+    workDetails: string;
   }>;
   equipment: Array<{
     type: string;
@@ -32,6 +33,7 @@ export interface IWorkLog extends Document {
   issues?: string;
   notes?: string;
   images?: string[];
+  status: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -55,7 +57,8 @@ const WorkLogSchema: Schema = new Schema(
     workDescription: { type: String },
     personnel: [{ 
       role: { type: String},
-      count: { type: Number }
+      count: { type: Number },
+      workDetails: { type: String}
     }],
     equipment: [{ 
       type: { type: String },
@@ -69,6 +72,7 @@ const WorkLogSchema: Schema = new Schema(
     }],
     issues: { type: String },
     notes: { type: String },
+    status: {type: String},
     images: [{ type: String }]
   },
   { timestamps: true }

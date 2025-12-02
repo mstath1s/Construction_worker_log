@@ -15,6 +15,7 @@ export interface WorkLogFormData {
   personnel: Array<{
     role: string;
     count: number;
+    workDetails: string;
   }>;
   equipment: Array<{
     type: string;

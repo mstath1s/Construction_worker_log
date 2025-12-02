@@ -2,6 +2,7 @@ import type { Collection, ObjectId } from 'mongodb';
 import { BaseRepository } from './base/BaseRepository';
 import type { FindOptions } from './base/IRepository';
 import { ValidationUtils } from '@/lib/api/validation';
+import {FORM_STATUS} from "@/components/constants/constantValues";
 
 /**
  * Personnel entry in a work log
@@ -51,6 +52,7 @@ export interface WorkLog {
   weather?: string;
   temperature?: number;
   workDescription: string;
+  status: string;
   personnel?: Personnel[];
   equipment?: Equipment[];
   materials?: Material[];
@@ -65,6 +67,7 @@ export interface WorkLog {
  */
 export interface WorkLogWithDetails extends WorkLog {
   projectName?: string;
+  projectLocation?: string;
   authorName?: string;
 }
 
@@ -169,6 +172,7 @@ export class WorkLogRepository extends BaseRepository<WorkLog> {
           const project = await projectsCollection.findOne({ _id: projectId });
           if (project) {
             result.projectName = project.name;
+            result.projectLocation = project.location;
           }
         }
       } catch (error) {
@@ -205,6 +209,7 @@ export class WorkLogRepository extends BaseRepository<WorkLog> {
         _id: 1,
         date: 1,
         project: 1,
+        status: 1,
         author: 1,
         workDescription: 1,
         createdAt: 1,
@@ -240,6 +245,7 @@ export class WorkLogRepository extends BaseRepository<WorkLog> {
       ...data,
       project: ValidationUtils.normalizeObjectId(data.project),
       author: ValidationUtils.normalizeObjectId(data.author),
+      status: FORM_STATUS.PENDING
     };
 
     return super.create(normalizedData as any);

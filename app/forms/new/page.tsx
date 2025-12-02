@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from 'next-auth/react'
-import { useForm } from 'react-hook-form'
+import { useForm, useFieldArray } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -14,7 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { toast } from 'sonner'
 import { fetchProjects, fetchUsers, createProject, createUser, ProjectWithId, UserWithId } from '@/lib/data-fetchers'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import { PlusCircle, ArrowLeft } from "lucide-react"
+import { PlusCircle, ArrowLeft, Trash2 } from "lucide-react"
 import { addPendingWorkLog } from '@/lib/indexedDBHelper'
 import { v4 as uuidv4 } from 'uuid'
 import { Toaster } from '@/components/ui/toaster'
@@ -22,7 +22,7 @@ import mongoose from 'mongoose'
 import { SignatureSection } from '@/components/SignatureSection'
 import type { Signature } from '@/types/shared'
 import { workLogSchema, WorkLogFormData, DEFAULT_PERSONNEL, DEFAULT_EQUIPMENT, DEFAULT_MATERIAL } from '@/lib/schemas/workLogSchema'
-
+import { PERSONNEL_ROLES, LABELS } from '@/components/constants/constantValues'
 function NewWorkLogFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -46,11 +46,16 @@ function NewWorkLogFormContent() {
     formState: { errors, isSubmitting },
     setValue,
     watch,
+    control,
   } = useForm<WorkLogFormData>({
     resolver: zodResolver(workLogSchema),
     defaultValues: {
       date: new Date().toISOString().split('T')[0],
-      personnel: [DEFAULT_PERSONNEL],
+      personnel: PERSONNEL_ROLES.map((role) => ({
+        role,         // set each row's default role
+        count: 0,
+        workDetails: "",
+      })),
       equipment: [DEFAULT_EQUIPMENT],
       materials: [DEFAULT_MATERIAL]
     }
@@ -59,6 +64,15 @@ function NewWorkLogFormContent() {
   // Add refs for dialog handling
   const projectDialogCloseRef = useRef<HTMLButtonElement>(null)
   const userDialogCloseRef = useRef<HTMLButtonElement>(null)
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "personnel",
+  });
+
+  const personnelValues = watch("personnel") || [];
+  const totalCount = personnelValues.reduce((sum, p) => sum + (p.count || 0), 0);
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -251,10 +265,22 @@ function NewWorkLogFormContent() {
     setValue('equipment', [...currentEquipment, DEFAULT_EQUIPMENT])
   }
 
+  const removeEquipment = (index: number) => {
+    const currentEquipment = watch('equipment') || [];
+    const newEquipment = currentEquipment.filter((_, i) => i !== index);
+    setValue('equipment', newEquipment);
+  };
+
   const addMaterial = () => {
     const currentMaterials = watch('materials') || []
     setValue('materials', [...currentMaterials, DEFAULT_MATERIAL])
   }
+
+  const removeMaterial = (index: number) => {
+    const currentMaterials = watch('materials') || [];
+    const newMaterials = currentMaterials.filter((_, i) => i !== index);
+    setValue('materials', newMaterials);
+  };
 
   const handleAddProject = async () => {
     try {
@@ -464,6 +490,19 @@ function NewWorkLogFormContent() {
                 </div>
 
                 <div>
+                  <Label htmlFor="projectLocation">Project Location</Label>
+                  <Input
+                    id="projectLocation"
+                    value={
+                      projects.find((project) => project._id === watch('project'))?.location || ''
+                    }
+                    readOnly
+                    placeholder="Project location will appear here"
+                    disabled
+                  />
+                </div>
+
+                <div>
                   <Label htmlFor="author">Author</Label>
                   <div className="flex space-x-2">
                     <div className="flex-1">
@@ -577,36 +616,43 @@ function NewWorkLogFormContent() {
 
             {/* Personnel Section */}
             <div>
-              <h2 className="text-xl font-semibold mb-4 border-b pb-2">Personnel</h2>
+              <h2 className="text-xl font-semibold mb-4 border-b pb-2">{LABELS.personnel} ({LABELS.total}: {totalCount})</h2>
               <div className="space-y-4">
-                {watch('personnel')?.map((_, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                {fields.map((field, index) => (
+                  <div key={field.id} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                     <button
+                        type="button"
+                        onClick={() => remove(index)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold"
+                      >
+                        <Trash2 size={16} />
+                    </button>
                     <div>
-                      <Label>Role</Label>
+                      <Label>{LABELS.role}</Label>
                       <Input
-                        placeholder="Role"
+                        placeholder={LABELS.role}
                         {...register(`personnel.${index}.role`)}
                       />
                     </div>
                     <div>
-                      <Label>Count</Label>
+                      <Label>{LABELS.count}</Label>
                       <Input
                         type="number"
-                        placeholder="Count"
+                        placeholder={LABELS.count}
                         {...register(`personnel.${index}.count`, { valueAsNumber: true })}
                       />
                     </div>
                     <div>
-                      <Label>Work Details</Label>
+                      <Label>{LABELS.workDetails}</Label>
                       <Input
-                        placeholder="Work Details"
+                        placeholder={LABELS.details}
                         {...register(`personnel.${index}.workDetails`)}
                       />
                     </div>
                   </div>
                 ))}
                 <Button type="button" variant="outline" onClick={addPersonnel} className="mt-2">
-                  Add Personnel
+                  {LABELS.addPersonnel}
                 </Button>
               </div>
             </div>
@@ -616,7 +662,14 @@ function NewWorkLogFormContent() {
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Equipment</h2>
               <div className="space-y-4">
                 {watch('equipment')?.map((_, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                    <button
+                        type="button"
+                        onClick={() => removeEquipment(index)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold"
+                      >
+                        <Trash2 size={16} />
+                    </button>
                     <div>
                       <Label>Type</Label>
                       <Input
@@ -653,7 +706,14 @@ function NewWorkLogFormContent() {
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Materials</h2>
               <div className="space-y-4">
                 {watch('materials')?.map((_, index) => (
-                  <div key={index} className="grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                    <button
+                        type="button"
+                        onClick={() => removeMaterial(index)}
+                        className="absolute top-2 right-2 text-red-500 hover:text-red-700 font-bold"
+                      >
+                        <Trash2 size={16} />
+                    </button>
                     <div>
                       <Label>Name</Label>
                       <Input

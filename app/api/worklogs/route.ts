@@ -20,6 +20,7 @@ export async function GET(request: Request) {
             _id: 1,
             date: 1,
             project: 1,
+            status: 1,
             author: 1,
             workDescription: 1,
             createdAt: 1,
