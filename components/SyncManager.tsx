@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { initDB } from "@/lib/indexedDBHelper";
 import { syncPendingWorkLogs } from "@/lib/syncService";
-import { SYNC_DELAY_MS, TOAST_DURATION } from '@/lib/constants';
+import { SYNC_DELAY_MS, TOAST_DURATION } from '@/lib/constants/constants';
 
 export const SyncManager: React.FC = () => {
   const [isSyncing, setIsSyncing] = useState(false);

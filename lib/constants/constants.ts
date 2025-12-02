@@ -128,3 +128,5 @@ export const MAX_DESCRIPTION_LENGTH = 5000;
  * Maximum notes length
  */
 export const MAX_NOTES_LENGTH = 2000;
+
+export const SESSION_COOKIE_NAME = "cw_session";

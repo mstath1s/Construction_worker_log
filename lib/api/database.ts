@@ -1,6 +1,6 @@
 import { dbConnect } from '@/lib/dbConnect'
 import mongoose from 'mongoose'
-import { DB_CONNECTION_TIMEOUT_MS } from '@/lib/constants'
+import { DB_CONNECTION_TIMEOUT_MS } from '@/lib/constants/constants'
 
 /**
  * Database utility functions for API routes

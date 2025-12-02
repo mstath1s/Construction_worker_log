@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import { useToast } from './useToast';
-import { TOAST_DURATION } from '@/lib/constants';
+import { TOAST_DURATION } from '@/lib/constants/constants';
 
 /**
  * Standardized error handling hook

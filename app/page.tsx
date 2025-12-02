@@ -6,6 +6,7 @@ import { PendingSubmissions } from "@/components/PendingSubmissions"
 import { dbConnect } from "@/lib/dbConnect"
 import mongoose from "mongoose"
 import type { Project, WorkLog } from "@/types/shared"
+import { LogoutButton } from "@/components/LogoutButton"
 
 async function getInitialData() {
   try {
@@ -85,6 +86,7 @@ export default async function HomePage() {
               </Link>
             </Button>
             <ThemeToggle />
+            <LogoutButton />
           </div>
         </div>
       </header>

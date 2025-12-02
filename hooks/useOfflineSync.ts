@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { addPendingWorkLog, PendingWorkLogData } from '@/lib/indexedDBHelper';
 import { useOnlineStatus } from './useOnlineStatus';
 import { useToast } from './useToast';
-import { TOAST_DURATION } from '@/lib/constants';
+import { TOAST_DURATION } from '@/lib/constants/constants';
 import type { WorkLogFormData } from './useWorkLogForm';
 
 /**

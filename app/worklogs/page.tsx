@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft } from "lucide-react";
-import { FORM_STATUS_LABELS, LABELS, FORM_STATUS, FORM_STATUS_CLASSES } from "@/components/constants/constantValues";
+import { FORM_STATUS_LABELS, LABELS, FORM_STATUS, FORM_STATUS_CLASSES } from "@/lib/constants/constantValues";
 import "./worklogs.css";
 
 interface WorkLog {

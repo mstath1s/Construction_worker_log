@@ -22,7 +22,7 @@ import mongoose from 'mongoose'
 import { SignatureSection } from '@/components/SignatureSection'
 import type { Signature } from '@/types/shared'
 import { workLogSchema, WorkLogFormData, DEFAULT_PERSONNEL, DEFAULT_EQUIPMENT, DEFAULT_MATERIAL } from '@/lib/schemas/workLogSchema'
-import { PERSONNEL_ROLES, LABELS } from '@/components/constants/constantValues'
+import { PERSONNEL_ROLES, LABELS } from '@/lib/constants/constantValues'
 function NewWorkLogFormContent() {
   const router = useRouter()
   const searchParams = useSearchParams()

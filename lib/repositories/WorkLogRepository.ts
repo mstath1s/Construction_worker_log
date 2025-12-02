@@ -2,7 +2,7 @@ import type { Collection, ObjectId } from 'mongodb';
 import { BaseRepository } from './base/BaseRepository';
 import type { FindOptions } from './base/IRepository';
 import { ValidationUtils } from '@/lib/api/validation';
-import {FORM_STATUS} from "@/components/constants/constantValues";
+import {FORM_STATUS} from "@/lib/constants/constantValues";
 
 /**
  * Personnel entry in a work log
