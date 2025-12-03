@@ -4,6 +4,7 @@ import robotoRegular from "../../fonts/Roboto-Regular.js";
 interface Personnel {
     role: string;
     count: number;
+    workDetails: string;
 }
 
 interface Equipment {
@@ -83,6 +84,87 @@ export function exportToPDF(workLog: WorkLog) {
         y += lineGap;
         lastLineY = y;
     };
+    
+    const addCardRow = (
+        columns: Array<{ label?: string; value?: string | number }>
+    ) => {
+        const cardSidePadding = 8;      // small padding inside the card
+        const colGap = 8;               // smaller gap between columns
+        //const cardHeight = 20;          // reduced card height
+    
+        const cardX = margin + 4;       // small left margin
+        const cardWidth = pageWidth - (margin + 4) * 2; // width minus small left/right padding
+        const lineSpacing = 0.5;
+    
+        // Check page overflow
+        /*if (y + cardHeight > pageHeight - margin) {
+            drawRect();
+            doc.addPage();
+            y = margin + 10;
+        }*/
+    
+       
+    
+        //const colWidth = (cardWidth - colGap * (columns.length - 1) - cardSidePadding * 2) / columns.length;
+    
+        //let x = cardX + cardSidePadding;
+
+        let maxLines = 1;
+        const wrappedValues: string[][] = [];
+    
+        columns.forEach(col => {
+            const text = String(col.value ?? "N/A");
+            doc.setFont("Roboto", "normal");
+            doc.setFontSize(10);
+            const colWidth = (cardWidth - colGap * (columns.length - 1) - cardSidePadding * 2) / columns.length;
+            const lines = doc.splitTextToSize(text, colWidth);
+            wrappedValues.push(lines);
+            if (lines.length > maxLines) maxLines = lines.length;
+        });
+
+        const cardHeight = 14 + maxLines * (10 + lineSpacing); // 14 = space for label + padding
+
+        // Check page overflow
+        if (y + cardHeight > pageHeight - margin) {
+            drawRect(); // draw rectangle for current page
+            doc.addPage();
+            y = margin + 10;
+        }
+        // Draw rounded rectangle for the card
+        doc.setFillColor(249, 250, 251); 
+        doc.roundedRect(cardX, y, cardWidth, cardHeight, 3, 3, "F");
+
+        const colWidth = (cardWidth - colGap * (columns.length - 1) - cardSidePadding * 2) / columns.length;
+        let x = cardX + cardSidePadding;
+        
+        columns.forEach((col, index) => {
+            // Label
+            doc.setFont("Roboto", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(120, 120, 120);
+            doc.text((col.label ?? "").toUpperCase(), x, y + 6);
+
+            // Wrapped value
+            doc.setFont("Roboto", "normal");
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+
+            const lines = wrappedValues[index];
+            // Start value below label
+            let valueY = y + 14;
+            lines.forEach(line => {
+                doc.text(line, x, valueY);
+                valueY += 10 + lineSpacing; // font size + spacing
+            });
+
+            x += colWidth + colGap;
+        });
+
+        
+    
+        y += cardHeight + 4; // spacing between cards
+        lastLineY = y;
+    };
 
     const addHeader = (label: string) => {
         if (y + 4 * lineGap > pageHeight - margin) {
@@ -135,9 +217,12 @@ export function exportToPDF(workLog: WorkLog) {
     // Personnel
     if (workLog.personnel?.length) {
         addHeader("Personnel");
-        workLog.personnel.forEach(({ role, count }) => {
-            addLine("Role", role);
-            addLine("Count", count);
+        workLog.personnel.forEach(({ role, count, workDetails }) => {
+            addCardRow([
+                { label: "Role", value: role },
+                { label: "Count", value: count },
+                { label: "Work Details", value: workDetails }
+            ]);
         });
     }
 
@@ -145,9 +230,11 @@ export function exportToPDF(workLog: WorkLog) {
     if (workLog.equipment?.length) {
         addHeader("Equipment");
         workLog.equipment.forEach(({ type, count, hours }) => {
-            addLine("Type", type);
-            addLine("Count", count);
-            addLine("Hours", hours);
+            addCardRow([
+                { label: "Type", value: type },
+                { label: "Count", value: count },
+                { label: "Hours", value: hours }
+            ]);
         });
     }
 
@@ -155,9 +242,11 @@ export function exportToPDF(workLog: WorkLog) {
     if (workLog.materials?.length) {
         addHeader("Materials");
         workLog.materials.forEach(({ name, quantity, unit }) => {
-            addLine("Name", name);
-            addLine("Quantity", quantity);
-            addLine("Unit", unit);
+            addCardRow([
+                { label: "Type", value: name },
+                { label: "Quantity", value: quantity },
+                { label: "Unit", value: unit }
+            ]);
         });
     }
 

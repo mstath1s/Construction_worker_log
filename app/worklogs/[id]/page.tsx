@@ -87,6 +87,8 @@ export default function WorkLogDetailPage() {
     }
   }, [id]);
 
+  
+
   const handleExportPDF = async () => {
     if (!workLog) return;
 
@@ -232,38 +234,44 @@ export default function WorkLogDetailPage() {
             </div>
           </div>
 
-          {/* Work Description
+          {/* Work Description */}
           <div>
             <h3 className="text-lg font-semibold mb-4 border-b pb-2">Work Description</h3>
             <p className="whitespace-pre-wrap">{workLog.workDescription}</p>
-          </div> */}
+          </div> 
 
           {/* Personnel */}
-          {workLog.personnel && workLog.personnel.length > 0 && (
-            <div>
-              <h3 className="text-lg font-semibold mb-4 border-b pb-2">{LABELS.personnel}</h3>
-              <div className="grid gap-4">
-                {workLog.personnel.map((person, index) => (
-                  <div key={index} className="border rounded-md p-4 bg-gray-50">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm text-gray-500">{LABELS.role}</p>
-                        <strong>{person.role || 'N/A'}</strong>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">{LABELS.count}</p>
-                        <p>{person.count}</p>
-                      </div>
-                      <div>
-                        <p className="text-sm text-gray-500">{LABELS.workDetails}</p>
-                        <p>{person.workDetails}</p>
+          {workLog.personnel && workLog.personnel.length > 0 && (() => {
+            const totalCount = workLog.personnel.reduce((sum, person) => sum + (Number(person.count) || 0),0);
+            return (
+              <div>
+                <h3 className="text-lg font-semibold mb-4 border-b pb-2">
+                  {LABELS.personnel} ({LABELS.total}: {totalCount})
+                </h3>
+
+                <div className="grid gap-4">
+                  {workLog.personnel.map((person, index) => (
+                    <div key={index} className="border rounded-md p-4 bg-gray-50">
+                      <div className="grid grid-cols-3 gap-4">
+                        <div>
+                          <p className="text-sm text-gray-500">{LABELS.role}</p>
+                          <strong>{person.role || 'N/A'}</strong>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">{LABELS.count}</p>
+                          <p>{person.count}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-gray-500">{LABELS.workDetails}</p>
+                          <p>{person.workDetails}</p>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* Equipment */}
           {workLog.equipment && workLog.equipment.length > 0 && (
