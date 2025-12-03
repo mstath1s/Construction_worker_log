@@ -2,6 +2,7 @@
 import { DEFAULT_PAGE_SIZE } from '@/lib/constants/constants';
 import { ApiError } from '@/lib/api/errorHandling';
 import { RepositoryFactory } from '@/lib/repositories';
+import { getAuthUser } from '@/utils/auth';
 
 export async function GET(request: Request) {
   try {
@@ -42,11 +43,23 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const startTime = Date.now();
+    const user = await getAuthUser();
+
+    if (!user) {
+      return ApiError.unauthorized();
+    }
+
     const data = await request.json();
 
     return await RepositoryFactory.withWorkLogRepository(async (workLogRepo) => {
+      // Ensure the worklog is created with the authenticated user's ID
+      const workLogData = {
+        ...data,
+        author: user.userId
+      };
+
       // Create the work log using repository
-      const workLog = await workLogRepo.create(data);
+      const workLog = await workLogRepo.create(workLogData);
 
       console.log(`Work log created in ${Date.now() - startTime}ms`);
 

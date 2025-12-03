@@ -1,6 +1,7 @@
 import { ApiError } from "@/lib/api/errorHandling";
 import { projectSchema } from "@/lib/schemas/projectSchema";
 import { RepositoryFactory } from "@/lib/repositories";
+import { getAuthUser, isAdmin } from "@/utils/auth";
 
 export async function GET() {
   try {
@@ -20,6 +21,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getAuthUser();
+
+    // Only admins/managers can create projects
+    if (!user || !isAdmin(user)) {
+      return ApiError.forbidden('Only administrators can create projects');
+    }
+
     const projectData = await request.json();
 
     // Validate project data

@@ -1,6 +1,7 @@
 import { ApiError } from "@/lib/api/errorHandling";
 import { userSchema } from "@/lib/schemas/userSchema";
 import { RepositoryFactory } from "@/lib/repositories";
+import { getAuthUser, isAdmin } from "@/utils/auth";
 
 export async function GET() {
   try {
@@ -20,6 +21,13 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const authUser = await getAuthUser();
+
+    // Only admins/managers can create users
+    if (!authUser || !isAdmin(authUser)) {
+      return ApiError.forbidden('Only administrators can create users');
+    }
+
     const userData = await request.json();
 
     // Validate user data with Zod schema

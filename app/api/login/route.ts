@@ -3,7 +3,7 @@ import { dbConnect } from "@/lib/dbConnect";
 import mongoose from "mongoose";
 import { createHash } from "crypto";
 import { SignJWT } from "jose";
-import { setSessionCookie } from "@/utils/auth";
+import { setSessionCookie, validateJWTSecret } from "@/utils/auth";
 
 
 function hashPassword(password: string) {
@@ -39,11 +39,12 @@ export async function POST(request: Request) {
     }
 
     // Create JWT token
+    const jwtSecret = validateJWTSecret();
     const token = await new SignJWT({ userId: user._id.toString(), role: user.role })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
     .setExpirationTime("12h")
-    .sign(new TextEncoder().encode(process.env.NEXT_JWT_SECRET!));
+    .sign(new TextEncoder().encode(jwtSecret));
 
     const response = NextResponse.json({
       message: "Logged in successfully",

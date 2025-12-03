@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { jwtVerify } from "jose";
 import { SESSION_COOKIE_NAME } from "./lib/constants/constants";
+import { validateJWTSecret } from "./utils/auth";
 
 
 // Paths that don't require authentication
@@ -33,15 +34,16 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
   try {
+    const jwtSecret = validateJWTSecret();
     const { payload } = await jwtVerify(
       sessionCookie!,
-      new TextEncoder().encode(process.env.NEXT_JWT_SECRET!)
+      new TextEncoder().encode(jwtSecret)
     );
 
     return NextResponse.next();
   } catch (err) {
     console.error("JWT ERROR:", err);
-    return NextResponse.json({ error: "Unauthorizedssssssss" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
 }
