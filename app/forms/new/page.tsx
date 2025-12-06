@@ -619,7 +619,7 @@ function NewWorkLogFormContent() {
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">{LABELS.personnel} ({LABELS.total}: {totalCount})</h2>
               <div className="space-y-4">
                 {fields.map((field, index) => (
-                  <div key={field.id} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                  <div key={field.id} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                      <button
                         type="button"
                         onClick={() => remove(index)}
@@ -662,7 +662,7 @@ function NewWorkLogFormContent() {
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Equipment</h2>
               <div className="space-y-4">
                 {watch('equipment')?.map((_, index) => (
-                  <div key={index} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                     <button
                         type="button"
                         onClick={() => removeEquipment(index)}
@@ -706,7 +706,7 @@ function NewWorkLogFormContent() {
               <h2 className="text-xl font-semibold mb-4 border-b pb-2">Materials</h2>
               <div className="space-y-4">
                 {watch('materials')?.map((_, index) => (
-                  <div key={index} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50">
+                  <div key={index} className="relative grid grid-cols-3 gap-4 p-4 border rounded-md bg-gray-50 dark:bg-gray-800">
                     <button
                         type="button"
                         onClick={() => removeMaterial(index)}

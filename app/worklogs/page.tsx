@@ -198,35 +198,35 @@ function WorkLogsPageContent() {
         <CardContent className="pt-6">
           <div className="grid gap-4 md:grid-cols-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 From date
               </label>
               <input
                 type="date"
                 value={fromDate}
                 onChange={(e) => setFromDate(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-background px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 To date
               </label>
               <input
                 type="date"
                 value={toDate}
                 onChange={(e) => setToDate(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-background px-3 py-2 text-sm"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                 Project
               </label>
               <select
                 value={filterProjectId}
                 onChange={(e) => setFilterProjectId(e.target.value)}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm bg-white"
+                className="w-full rounded-md border border-gray-300 dark:border-gray-600 bg-background px-3 py-2 text-sm"
               >
                 <option value="">All projects</option>
                 {projects.map((proj) => (

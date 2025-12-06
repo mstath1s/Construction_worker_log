@@ -11,8 +11,9 @@
     padding: 0.25rem 0.25rem;
     border-radius: 0.5rem;
     margin: 10px;
+    color: #1f2937;
   }
-  
+
   .status-badge-dot {
     width: 0.5rem;
     height: 0.5rem;
